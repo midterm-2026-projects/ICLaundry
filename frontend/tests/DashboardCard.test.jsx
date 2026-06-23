@@ -6,41 +6,77 @@ import DashboardCard from '../components/DashboardCard'
 
 describe('DashboardCard', () => {
 
-  it('renders icon when provided', () => {
+  it('renders provided title, value, and icon', () => {
+    // Arrange
+    const icon = (
+      <svg data-testid="warning-icon">
+        <circle cx="12" cy="12" r="10" />
+      </svg>
+    )
+
+    // Act
     render(
       <DashboardCard
         title="Low Stock"
         value={2}
-        icon="Warning"
+        icon={icon}
       />
     )
 
-    expect(screen.getByText('Warning')).toBeInTheDocument()
+    // Assert
+    expect(screen.getByText('Low Stock')).toBeInTheDocument()
+    expect(screen.getByText('2')).toBeInTheDocument()
+    expect(screen.getByTestId('warning-icon')).toBeInTheDocument()
   })
 
-  it('renders without value', () => {
+  it('renders default value when value is not provided', () => {
+    // Arrange
+    const icon = (
+      <svg data-testid="info-icon">
+        <circle cx="12" cy="12" r="10" />
+      </svg>
+    )
+
+    // Act
     render(
       <DashboardCard
         title="Incomplete Card"
-        icon="Info"
+        icon={icon}
       />
     )
 
+    // Assert
     expect(screen.getByText('Incomplete Card')).toBeInTheDocument()
+    expect(screen.getByText('0')).toBeInTheDocument()
+    expect(screen.getByTestId('info-icon')).toBeInTheDocument()
   })
 
-  it('renders without title', () => {
+  it('renders default title when title is not provided', () => {
+    // Arrange
+    const icon = (
+      <svg data-testid="users-icon">
+        <circle cx="12" cy="12" r="10" />
+      </svg>
+    )
+
+    // Act
     render(
       <DashboardCard
         value={10}
-        icon="Users"
+        icon={icon}
       />
     )
 
+    // Assert
+    expect(screen.getByText('Title Card')).toBeInTheDocument()
     expect(screen.getByText('10')).toBeInTheDocument()
+    expect(screen.getByTestId('users-icon')).toBeInTheDocument()
   })
 
-  it('renders without icon', () => {
+  it('renders default icon when icon is not provided', () => {
+    // Arrange
+
+    // Act
     render(
       <DashboardCard
         title="Total Customers"
@@ -48,34 +84,21 @@ describe('DashboardCard', () => {
       />
     )
 
+    // Assert
     expect(screen.getByText('Total Customers')).toBeInTheDocument()
     expect(screen.getByText('4')).toBeInTheDocument()
+    expect(screen.getByText('Default Icon')).toBeInTheDocument()
   })
 
-  it('renders with only title', () => {
-    render(
-      <DashboardCard
-        title="Revenue"
-      />
-    )
+  it('renders all default values when no props are provided', () => {
+  
+    // Act
+    render(<DashboardCard />)
 
-    expect(screen.getByText('Revenue')).toBeInTheDocument()
-  })
-
-  it('renders with only value', () => {
-    render(
-      <DashboardCard
-        value={100}
-      />
-    )
-
-    expect(screen.getByText('100')).toBeInTheDocument()
-  })
-
-  it('renders even when no props are provided', () => {
-    const { container } = render(<DashboardCard />)
-
-    expect(container.firstChild).toBeInTheDocument()
+    // Assert
+    expect(screen.getByText('Title Card')).toBeInTheDocument()
+    expect(screen.getByText('0')).toBeInTheDocument()
+    expect(screen.getByText('Default Icon')).toBeInTheDocument()
   })
 
 })
