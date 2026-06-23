@@ -1,4 +1,6 @@
-const DSSInsightsCard = ({ insight }) => {
+const DSSInsightsCard = ({
+  insight = "No insights available",
+}) => {
   return (
     <div>
       <h2>DSS Insights</h2>

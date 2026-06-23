@@ -1,4 +1,6 @@
-const NetProfitCard = ({ value }) => {
+const NetProfitCard = ({
+  value = "₱0",
+}) => {
   return (
     <div>
       <h2>Net Profit</h2>

@@ -1,4 +1,6 @@
-const DSSAlertsSection = ({ alert }) => {
+const DSSAlertsSection = ({
+  alert = "No alerts available",
+}) => {
   return (
     <div>
       <h2>DSS Alerts</h2>

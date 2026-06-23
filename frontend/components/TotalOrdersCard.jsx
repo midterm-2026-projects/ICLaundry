@@ -1,4 +1,6 @@
-const TotalOrdersCard = ({ value }) => {
+const TotalOrdersCard = ({
+  value = 0,
+}) => {
   return (
     <div>
       <h2>Total Orders</h2>

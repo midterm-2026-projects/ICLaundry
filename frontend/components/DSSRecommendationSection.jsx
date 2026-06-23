@@ -1,5 +1,5 @@
 const DSSRecommendationSection = ({
-  recommendation,
+  recommendation = "No recommendations available",
 }) => {
   return (
     <div>

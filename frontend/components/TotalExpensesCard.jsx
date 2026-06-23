@@ -1,4 +1,6 @@
-const TotalExpensesCard = ({ value }) => {
+const TotalExpensesCard = ({
+  value = "₱0",
+}) => {
   return (
     <div>
       <h2>Total Expenses</h2>
