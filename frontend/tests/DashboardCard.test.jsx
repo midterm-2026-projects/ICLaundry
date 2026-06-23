@@ -6,50 +6,6 @@ import DashboardCard from '../components/DashboardCard'
 
 describe('DashboardCard', () => {
 
-  it('renders title and value', () => {
-    render(
-      <DashboardCard
-        title="Total Customers"
-        value={4}
-      />
-    )
-
-    expect(screen.getByText('Total Customers')).toBeInTheDocument()
-    expect(screen.getByText('4')).toBeInTheDocument()
-  })
-
-  it('renders string and numeric values correctly', () => {
-    const { rerender } = render(
-      <DashboardCard
-        title="Revenue"
-        value="P0"
-      />
-    )
-
-    expect(screen.getByText('P0')).toBeInTheDocument()
-
-    rerender(
-      <DashboardCard
-        title="Revenue"
-        value={100}
-      />
-    )
-
-    expect(screen.getByText('100')).toBeInTheDocument()
-  })
-
-  it('renders without crashing when optional props are missing', () => {
-    render(
-      <DashboardCard
-        title="Active Orders"
-        value={6}
-      />
-    )
-
-    expect(screen.getByText('Active Orders')).toBeInTheDocument()
-    expect(screen.getByText('6')).toBeInTheDocument()
-  })
-
   it('renders icon when provided', () => {
     render(
       <DashboardCard
@@ -62,14 +18,64 @@ describe('DashboardCard', () => {
     expect(screen.getByText('Warning')).toBeInTheDocument()
   })
 
-  it('handles missing value gracefully', () => {
+  it('renders without value', () => {
     render(
       <DashboardCard
         title="Incomplete Card"
+        icon="Info"
       />
     )
 
     expect(screen.getByText('Incomplete Card')).toBeInTheDocument()
+  })
+
+  it('renders without title', () => {
+    render(
+      <DashboardCard
+        value={10}
+        icon="Users"
+      />
+    )
+
+    expect(screen.getByText('10')).toBeInTheDocument()
+  })
+
+  it('renders without icon', () => {
+    render(
+      <DashboardCard
+        title="Total Customers"
+        value={4}
+      />
+    )
+
+    expect(screen.getByText('Total Customers')).toBeInTheDocument()
+    expect(screen.getByText('4')).toBeInTheDocument()
+  })
+
+  it('renders with only title', () => {
+    render(
+      <DashboardCard
+        title="Revenue"
+      />
+    )
+
+    expect(screen.getByText('Revenue')).toBeInTheDocument()
+  })
+
+  it('renders with only value', () => {
+    render(
+      <DashboardCard
+        value={100}
+      />
+    )
+
+    expect(screen.getByText('100')).toBeInTheDocument()
+  })
+
+  it('renders even when no props are provided', () => {
+    const { container } = render(<DashboardCard />)
+
+    expect(container.firstChild).toBeInTheDocument()
   })
 
 })
