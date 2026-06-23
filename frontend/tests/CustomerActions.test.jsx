@@ -15,7 +15,6 @@ import CustomerActions from "../components/CustomerActions.jsx";
 
 describe("CustomerActions", () => {
   it("Should display the Add Customer button", () => {
-    // Arrange
     render(
       <CustomerActions
         setShowModal={vi.fn()}
@@ -23,20 +22,14 @@ describe("CustomerActions", () => {
       />
     );
 
-    // Act
-    const result = screen.getByRole(
-      "button",
-      {
+    expect(
+      screen.getByRole("button", {
         name: "Add Customer",
-      }
-    );
-
-    // Assert
-    expect(result).toBeInTheDocument();
+      })
+    ).toBeInTheDocument();
   });
 
   it("Should open the Add Customer modal when the button is clicked", () => {
-    // Arrange
     const setShowModal = vi.fn();
     const setEditing = vi.fn();
 
@@ -47,17 +40,12 @@ describe("CustomerActions", () => {
       />
     );
 
-    const button = screen.getByRole(
-      "button",
-      {
+    fireEvent.click(
+      screen.getByRole("button", {
         name: "Add Customer",
-      }
+      })
     );
 
-    // Act
-    fireEvent.click(button);
-
-    // Assert
     expect(setEditing)
       .toHaveBeenCalledWith(false);
 
@@ -66,7 +54,6 @@ describe("CustomerActions", () => {
   });
 
   it("Should open the Edit Customer modal when the Edit button is clicked", () => {
-    // Arrange
     const setShowModal = vi.fn();
     const setEditing = vi.fn();
 
@@ -77,21 +64,37 @@ describe("CustomerActions", () => {
       />
     );
 
-    const button = screen.getByRole(
-      "button",
-      {
+    fireEvent.click(
+      screen.getByRole("button", {
         name: "Edit Customer",
-      }
+      })
     );
 
-    // Act
-    fireEvent.click(button);
-
-    // Assert
     expect(setEditing)
       .toHaveBeenCalledWith(true);
 
     expect(setShowModal)
       .toHaveBeenCalledWith(true);
+  });
+
+  it("Should trigger Delete action when Delete button is clicked", () => {
+    const onDelete = vi.fn();
+
+    render(
+      <CustomerActions
+        setShowModal={vi.fn()}
+        setEditing={vi.fn()}
+        onDelete={onDelete}
+      />
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Delete",
+      })
+    );
+
+    expect(onDelete)
+      .toHaveBeenCalledTimes(1);
   });
 });

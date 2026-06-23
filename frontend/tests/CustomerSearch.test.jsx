@@ -1,19 +1,58 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import {
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
+
+import {
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 import CustomerSearch from "../components/CustomerSearch.jsx";
 
 describe("CustomerSearch", () => {
   it("Should display the Customer search bar", () => {
-    // Arrange
-    render(<CustomerSearch />);
-
-    // Act
-    const result = screen.getByPlaceholderText(
-      "Search customers..."
+    render(
+      <CustomerSearch
+        value=""
+        onSearch={vi.fn()}
+      />
     );
 
-    // Assert
-    expect(result).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText(
+        "Search customers..."
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("Should update search value when user types", () => {
+    const onSearch = vi.fn();
+
+    render(
+      <CustomerSearch
+        value=""
+        onSearch={onSearch}
+      />
+    );
+
+    fireEvent.change(
+      screen.getByPlaceholderText(
+        "Search customers..."
+      ),
+      {
+        target: {
+          value: "Juan",
+        },
+      }
+    );
+
+    expect(onSearch)
+      .toHaveBeenCalledWith(
+        "Juan"
+      );
   });
 });

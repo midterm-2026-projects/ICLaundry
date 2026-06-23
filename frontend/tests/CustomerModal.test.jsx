@@ -1,4 +1,9 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
+
 import {
   describe,
   expect,
@@ -7,95 +12,158 @@ import {
 } from "vitest";
 
 import CustomerModal from "../components/CustomerModal.jsx";
-import CustomerActions from "../components/CustomerActions.jsx";
 
 describe("CustomerModal", () => {
   it("Should display Full Name, Phone Number, Email, and Notes fields inside the modal", () => {
-    // Arrange
-    render(<CustomerModal editing={false} />);
+    render(
+      <CustomerModal editing={false} />
+    );
 
-    // Act
-    const fullName =
-      screen.getByLabelText("Full Name");
+    expect(
+      screen.getByLabelText("Full Name")
+    ).toBeInTheDocument();
 
-    const phone =
-      screen.getByLabelText("Phone Number");
+    expect(
+      screen.getByLabelText("Phone Number")
+    ).toBeInTheDocument();
 
-    const email =
-      screen.getByLabelText("Email");
+    expect(
+      screen.getByLabelText("Email")
+    ).toBeInTheDocument();
 
-    const notes =
-      screen.getByLabelText("Notes");
-
-    // Assert
-    expect(fullName).toBeInTheDocument();
-    expect(phone).toBeInTheDocument();
-    expect(email).toBeInTheDocument();
-    expect(notes).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Notes")
+    ).toBeInTheDocument();
   });
 
-  it("Should trigger Update and Delete actions when buttons are clicked", () => {
-  // Arrange
-  const onUpdate = vi.fn();
-  const onDelete = vi.fn();
+  it("Should pass customer data when Add Customer button is clicked", () => {
+    const onAddCustomer = vi.fn();
 
-  render(
-    <>
+    render(
+      <CustomerModal
+        editing={false}
+        onAddCustomer={onAddCustomer}
+      />
+    );
+
+    fireEvent.change(
+      screen.getByLabelText("Full Name"),
+      {
+        target: {
+          value: "Juan Dela Cruz",
+        },
+      }
+    );
+
+    fireEvent.change(
+      screen.getByLabelText("Phone Number"),
+      {
+        target: {
+          value: "09171234567",
+        },
+      }
+    );
+
+    fireEvent.change(
+      screen.getByLabelText("Email"),
+      {
+        target: {
+          value: "juan@gmail.com",
+        },
+      }
+    );
+
+    fireEvent.change(
+      screen.getByLabelText("Notes"),
+      {
+        target: {
+          value: "VIP Customer",
+        },
+      }
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add Customer",
+      })
+    );
+
+    expect(onAddCustomer)
+      .toHaveBeenCalledWith({
+        fullName: "Juan Dela Cruz",
+        phone: "09171234567",
+        email: "juan@gmail.com",
+        notes: "VIP Customer",
+      });
+  });
+
+  it("Should pass customer data when Update button is clicked", () => {
+    const onUpdate = vi.fn();
+
+    render(
       <CustomerModal
         editing
         onUpdate={onUpdate}
       />
+    );
 
-      <CustomerActions
-        setShowModal={() => {}}
-        setEditing={() => {}}
-        onDelete={onDelete}
-      />
-    </>
-  );
+    fireEvent.change(
+      screen.getByLabelText("Full Name"),
+      {
+        target: {
+          value: "Updated Name",
+        },
+      }
+    );
 
-  const update =
-    screen.getByRole("button", {
-      name: "Update",
-    });
+    fireEvent.change(
+      screen.getByLabelText("Phone Number"),
+      {
+        target: {
+          value: "09999999999",
+        },
+      }
+    );
 
-  const deleteButton =
-    screen.getByRole("button", {
-      name: "Delete",
-    });
+    fireEvent.change(
+      screen.getByLabelText("Email"),
+      {
+        target: {
+          value: "updated@gmail.com",
+        },
+      }
+    );
 
-  // Act
-  fireEvent.click(update);
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Update",
+      })
+    );
 
-  fireEvent.click(deleteButton);
-
-  // Assert
-  expect(onUpdate)
-    .toHaveBeenCalled();
-
-  expect(onDelete)
-    .toHaveBeenCalled();
-});
+    expect(onUpdate)
+      .toHaveBeenCalledWith({
+        fullName: "Updated Name",
+        phone: "09999999999",
+        email: "updated@gmail.com",
+        notes: "",
+      });
+  });
 
   it("Should prevent submission when required fields are empty", () => {
-  // Arrange
-  render(
-    <CustomerModal editing={false} />
-  );
+    render(
+      <CustomerModal editing={false} />
+    );
 
-  const button =
-    screen.getByRole("button", {
-      name: "Add Customer",
-    });
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Add Customer",
+      })
+    );
 
-  // Act
-  fireEvent.click(button);
-
-  // Assert
-  expect(
-    screen.getByText(
-      "Full Name, Phone Number, and Email are required."
-    )
-  ).toBeInTheDocument();
-});
+    expect(
+      screen.getByText(
+        "Full Name, Phone Number, and Email are required."
+      )
+    ).toBeInTheDocument();
+  });
 });

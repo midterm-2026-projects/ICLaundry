@@ -2,6 +2,7 @@ import { useState } from "react";
 
 export default function CustomerModal({
   editing,
+  onAddCustomer,
   onUpdate,
 }) {
   const [fullName, setFullName] =
@@ -13,10 +14,20 @@ export default function CustomerModal({
   const [email, setEmail] =
     useState("");
 
+  const [notes, setNotes] =
+    useState("");
+
   const [error, setError] =
     useState("");
 
-  const handleSubmit = () => {
+  const customerData = {
+    fullName,
+    phone,
+    email,
+    notes,
+  };
+
+  const validateFields = () => {
     if (
       !fullName.trim() ||
       !phone.trim() ||
@@ -25,10 +36,29 @@ export default function CustomerModal({
       setError(
         "Full Name, Phone Number, and Email are required."
       );
-      return;
+
+      return false;
     }
 
     setError("");
+
+    return true;
+  };
+
+  const handleAddCustomer = () => {
+    if (!validateFields()) {
+      return;
+    }
+
+    onAddCustomer?.(customerData);
+  };
+
+  const handleUpdate = () => {
+    if (!validateFields()) {
+      return;
+    }
+
+    onUpdate?.(customerData);
   };
 
   return (
@@ -79,19 +109,27 @@ export default function CustomerModal({
         Notes
       </label>
 
-      <textarea id="notes" />
+      <textarea
+        id="notes"
+        value={notes}
+        onChange={(e) =>
+          setNotes(e.target.value)
+        }
+      />
 
       {error && <p>{error}</p>}
 
       <button
-  onClick={
-    editing
-      ? onUpdate
-      : handleSubmit
-  }
->
-  {editing ? "Update" : "Add Customer"}
-</button>
+        onClick={
+          editing
+            ? handleUpdate
+            : handleAddCustomer
+        }
+      >
+        {editing
+          ? "Update"
+          : "Add Customer"}
+      </button>
     </div>
   );
 }
