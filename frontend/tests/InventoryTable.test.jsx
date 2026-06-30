@@ -1,6 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, it, expect, vi } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  vi,
+} from "vitest";
 import InventoryTable from "../components/InventoryTable";
 
 describe("InventoryTable", () => {
@@ -26,8 +31,7 @@ describe("InventoryTable", () => {
     },
   ];
 
-  it("should display inventory table", () => {
-    // Arrange
+  it("should render inventory table", () => {
     render(
       <InventoryTable
         inventory={
@@ -38,19 +42,12 @@ describe("InventoryTable", () => {
       />
     );
 
-    // Act
-    const table =
-      screen.getByRole(
-        "table"
-      );
-
-    // Assert
-    expect(table)
-      .toBeInTheDocument();
+    expect(
+      screen.getByRole("table")
+    ).toBeInTheDocument();
   });
 
-  it("should display table headers", () => {
-    // Arrange
+  it("should render all table headers", () => {
     render(
       <InventoryTable
         inventory={
@@ -61,59 +58,42 @@ describe("InventoryTable", () => {
       />
     );
 
-    // Act
-    const item =
+    expect(
       screen.getByText(
         "Item Name"
-      );
+      )
+    ).toBeInTheDocument();
 
-    const category =
+    expect(
       screen.getByText(
         "Category"
-      );
+      )
+    ).toBeInTheDocument();
 
-    const quantity =
+    expect(
       screen.getByText(
         "Quantity"
-      );
+      )
+    ).toBeInTheDocument();
 
-    const unit =
-      screen.getByText(
-        "Unit"
-      );
+    expect(
+      screen.getByText("Unit")
+    ).toBeInTheDocument();
 
-    const status =
+    expect(
       screen.getByText(
         "Status"
-      );
+      )
+    ).toBeInTheDocument();
 
-    const actions =
+    expect(
       screen.getByText(
         "Actions"
-      );
-
-    // Assert
-    expect(item)
-      .toBeInTheDocument();
-
-    expect(category)
-      .toBeInTheDocument();
-
-    expect(quantity)
-      .toBeInTheDocument();
-
-    expect(unit)
-      .toBeInTheDocument();
-
-    expect(status)
-      .toBeInTheDocument();
-
-    expect(actions)
-      .toBeInTheDocument();
+      )
+    ).toBeInTheDocument();
   });
 
-  it("should display inventory records", () => {
-    // Arrange
+  it("should display all inventory data", () => {
     render(
       <InventoryTable
         inventory={
@@ -124,27 +104,48 @@ describe("InventoryTable", () => {
       />
     );
 
-    // Act
-    const detergent =
+    expect(
       screen.getByText(
         "Ariel Detergent"
-      );
+      )
+    ).toBeInTheDocument();
 
-    const downy =
+    expect(
       screen.getByText(
         "Downy"
-      );
+      )
+    ).toBeInTheDocument();
 
-    // Assert
-    expect(detergent)
-      .toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Detergent"
+      )
+    ).toBeInTheDocument();
 
-    expect(downy)
-      .toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Fabric Conditioner"
+      )
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText("25")
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText("5")
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText("kg")
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText("L")
+    ).toBeInTheDocument();
   });
 
   it("should display stock status badges", () => {
-    // Arrange
     render(
       <InventoryTable
         inventory={
@@ -155,23 +156,16 @@ describe("InventoryTable", () => {
       />
     );
 
-    // Act
-    const ok =
-      screen.getByText("OK");
+    expect(
+      screen.getByText("OK")
+    ).toBeInTheDocument();
 
-    const low =
-      screen.getByText("Low");
-
-    // Assert
-    expect(ok)
-      .toBeInTheDocument();
-
-    expect(low)
-      .toBeInTheDocument();
+    expect(
+      screen.getByText("Low")
+    ).toBeInTheDocument();
   });
 
   it("should display Edit buttons", () => {
-    // Arrange
     render(
       <InventoryTable
         inventory={
@@ -182,22 +176,17 @@ describe("InventoryTable", () => {
       />
     );
 
-    // Act
-    const buttons =
+    expect(
       screen.getAllByRole(
         "button",
         {
           name: /edit/i,
         }
-      );
-
-    // Assert
-    expect(buttons)
-      .toHaveLength(2);
+      )
+    ).toHaveLength(2);
   });
 
   it("should display Delete buttons", () => {
-    // Arrange
     render(
       <InventoryTable
         inventory={
@@ -208,22 +197,17 @@ describe("InventoryTable", () => {
       />
     );
 
-    // Act
-    const buttons =
+    expect(
       screen.getAllByRole(
         "button",
         {
           name: /delete/i,
         }
-      );
-
-    // Assert
-    expect(buttons)
-      .toHaveLength(2);
+      )
+    ).toHaveLength(2);
   });
 
-  it("should call onEdit when Edit button is clicked", async () => {
-    // Arrange
+  it("should call onEdit with selected item", async () => {
     const user =
       userEvent.setup();
 
@@ -248,20 +232,17 @@ describe("InventoryTable", () => {
         }
       );
 
-    // Act
     await user.click(
       buttons[0]
     );
 
-    // Assert
     expect(handleEdit)
       .toHaveBeenCalledWith(
         mockInventory[0]
       );
   });
 
-  it("should call onDelete when Delete button is clicked", async () => {
-    // Arrange
+  it("should call onDelete with selected item", async () => {
     const user =
       userEvent.setup();
 
@@ -288,12 +269,10 @@ describe("InventoryTable", () => {
         }
       );
 
-    // Act
     await user.click(
       buttons[1]
     );
 
-    // Assert
     expect(handleDelete)
       .toHaveBeenCalledWith(
         mockInventory[1]
@@ -301,7 +280,6 @@ describe("InventoryTable", () => {
   });
 
   it("should display empty state when inventory is empty", () => {
-    // Arrange
     render(
       <InventoryTable
         inventory={[]}
@@ -310,14 +288,10 @@ describe("InventoryTable", () => {
       />
     );
 
-    // Act
-    const message =
+    expect(
       screen.getByText(
         "No inventory records found"
-      );
-
-    // Assert
-    expect(message)
-      .toBeInTheDocument();
+      )
+    ).toBeInTheDocument();
   });
 });

@@ -1,97 +1,92 @@
-import ItemNameColumn from "./ItemNameColumn";
-import CategoryColumn from "./CategoryColumn";
-import QuantityColumn from "./QuantityColumn";
-import UnitColumn from "./UnitColumn";
-import StockStatusBadge from "./StockStatusBadge";
-import ActionsColumn from "./ActionsColumn";
-
 const InventoryTable = ({
   inventory,
   onEdit,
   onDelete,
 }) => {
   return (
-    <>
-      <table>
-        <thead>
-          <tr>
-            <th>Item Name</th>
-            <th>Category</th>
-            <th>Quantity</th>
-            <th>Unit</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
+    <table>
+      <thead>
+        <tr>
+          <th>Item Name</th>
+          <th>Category</th>
+          <th>Quantity</th>
+          <th>Unit</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
 
-        <tbody>
-          {inventory.length > 0 ? (
-            inventory.map((item) => (
+      <tbody>
+        {inventory.length > 0 ? (
+          inventory.map((item) => {
+            const isLow =
+              item.quantity <=
+              item.minimumStock;
+
+            return (
               <tr key={item.id}>
                 <td>
-                  <ItemNameColumn
-                    itemName={
-                      item.itemName
-                    }
-                  />
+                  <span>
+                    {item.itemName}
+                  </span>
                 </td>
 
                 <td>
-                  <CategoryColumn
-                    category={
-                      item.category
-                    }
-                  />
+                  <span>
+                    {item.category}
+                  </span>
                 </td>
 
                 <td>
-                  <QuantityColumn
-                    quantity={
-                      item.quantity
-                    }
-                  />
+                  <span>
+                    {item.quantity}
+                  </span>
                 </td>
 
                 <td>
-                  <UnitColumn
-                    unit={item.unit}
-                  />
+                  <span>
+                    {item.unit}
+                  </span>
                 </td>
 
                 <td>
-                  <StockStatusBadge
-                    quantity={
-                      item.quantity
-                    }
-                    minimumStock={
-                      item.minimumStock
-                    }
-                  />
+                  <span>
+                    {isLow
+                      ? "Low"
+                      : "OK"}
+                  </span>
                 </td>
 
                 <td>
-                  <ActionsColumn
-                    onEdit={() =>
+                  <button
+                    onClick={() =>
                       onEdit(item)
                     }
-                    onDelete={() =>
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    onClick={() =>
                       onDelete(item)
                     }
-                  />
+                  >
+                    Delete
+                  </button>
                 </td>
               </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="6">
-                No inventory records
-                found
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </>
+            );
+          })
+        ) : (
+          <tr>
+            <td colSpan={6}>
+              No inventory records
+              found
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
   );
 };
 
