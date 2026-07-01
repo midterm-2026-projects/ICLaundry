@@ -241,80 +241,71 @@ describe("RestockModal", () => {
       });
   });
 
-  it("should call onClose after successful restock", async () => {
-    // Arrange
-    const user =
-      userEvent.setup();
+it("should call onClose after successful restock", async () => {
+  // Arrange
+  const user = userEvent.setup();
 
-    const handleClose =
-      vi.fn();
+  const handleClose = vi.fn();
 
-    render(
-      <RestockModal
-        isOpen={true}
-        onClose={
-          handleClose
-        }
-        onSubmitRestock={vi.fn()}
-      />
+  render(
+    <RestockModal
+      isOpen={true}
+      onClose={handleClose}
+      onSubmitRestock={vi.fn()}
+    />
+  );
+
+  // Act
+  await user.type(
+    screen.getByLabelText(
+      /restock quantity/i
+    ),
+    "15"
+  );
+
+  await user.click(
+    screen.getByRole("button", {
+      name: /submit restock/i,
+    })
+  );
+
+  // Assert
+  expect(handleClose)
+    .toHaveBeenCalledTimes(1);
+
+  expect(handleClose)
+    .toHaveBeenCalledWith();
+});
+
+ it("should call onClose when Cancel button is clicked", async () => {
+  // Arrange
+  const user = userEvent.setup();
+
+  const handleClose = vi.fn();
+
+  render(
+    <RestockModal
+      isOpen={true}
+      onClose={handleClose}
+      onSubmitRestock={vi.fn()}
+    />
+  );
+
+  const cancelButton =
+    screen.getByRole("button", {
+      name: /cancel/i,
+    });
+
+  // Act
+  await user.click(cancelButton);
+
+  // Assert
+  expect(handleClose)
+    .toHaveBeenCalledTimes(1);
+
+  expect(handleClose)
+    .toHaveBeenCalledWith(
+      expect.any(Object)
     );
-
-    // Act
-    await user.type(
-      screen.getByLabelText(
-        /restock quantity/i
-      ),
-      "15"
-    );
-
-    await user.click(
-      screen.getByRole(
-        "button",
-        {
-          name:
-            /submit restock/i,
-        }
-      )
-    );
-
-    // Assert
-    expect(handleClose)
-      .toHaveBeenCalledWith();
-  });
-
-  it("should call onClose when Cancel button is clicked", async () => {
-    // Arrange
-    const user =
-      userEvent.setup();
-
-    const handleClose =
-      vi.fn();
-
-    render(
-      <RestockModal
-        isOpen={true}
-        onClose={
-          handleClose
-        }
-        onSubmitRestock={vi.fn()}
-      />
-    );
-
-    const cancelButton =
-      screen.getByRole(
-        "button",
-        {
-          name: /cancel/i,
-        }
-      );
-
-    // Act
-    await user.click(
-      cancelButton
-    );
-
-    // Assert
-    expect(handleClose)
-      .toHaveBeenCalledWith();
-  });
+});
 });

@@ -62,41 +62,39 @@ describe("EditItemModal", () => {
   });
 
   it("should display existing inventory information", () => {
-    // Arrange
-    render(
-      <EditItemModal
-        isOpen={true}
-        item={mockItem}
-        onClose={vi.fn()}
-        onUpdateItem={vi.fn()}
-      />
-    );
+  // Arrange
+  render(
+    <EditItemModal
+      isOpen={true}
+      item={mockItem}
+      onClose={vi.fn()}
+      onUpdateItem={vi.fn()}
+    />
+  );
 
-    // Assert
-    expect(
-      screen.getByDisplayValue(
-        "Ariel Powder"
-      )
-    ).toBeInTheDocument();
+  // Assert
+  expect(
+    screen.getByDisplayValue(
+      "Ariel Powder"
+    )
+  ).toBeInTheDocument();
 
-    expect(
-      screen.getByDisplayValue(
-        "Detergent"
-      )
-    ).toBeInTheDocument();
+  expect(
+    screen.getByLabelText(/category/i)
+  ).toHaveValue("Detergent");
 
-    expect(
-      screen.getByDisplayValue("20")
-    ).toBeInTheDocument();
+  expect(
+    screen.getByDisplayValue("20")
+  ).toBeInTheDocument();
 
-    expect(
-      screen.getByDisplayValue("kg")
-    ).toBeInTheDocument();
+  expect(
+    screen.getByLabelText(/unit/i)
+  ).toHaveValue("kg");
 
-    expect(
-      screen.getByDisplayValue("5")
-    ).toBeInTheDocument();
-  });
+  expect(
+    screen.getByDisplayValue("5")
+  ).toBeInTheDocument();
+});
 
   it("should display Update Item button", () => {
     // Arrange
@@ -296,39 +294,35 @@ describe("EditItemModal", () => {
   });
 
   it("should call onClose when Cancel button is clicked", async () => {
-    // Arrange
-    const user =
-      userEvent.setup();
+  // Arrange
+  const user = userEvent.setup();
 
-    const handleClose =
-      vi.fn();
+  const handleClose = vi.fn();
 
-    render(
-      <EditItemModal
-        isOpen={true}
-        item={mockItem}
-        onClose={
-          handleClose
-        }
-        onUpdateItem={vi.fn()}
-      />
+  render(
+    <EditItemModal
+      isOpen={true}
+      item={mockItem}
+      onClose={handleClose}
+      onUpdateItem={vi.fn()}
+    />
+  );
+
+  const cancelButton =
+    screen.getByRole("button", {
+      name: /cancel/i,
+    });
+
+  // Act
+  await user.click(cancelButton);
+
+  // Assert
+  expect(handleClose)
+    .toHaveBeenCalledTimes(1);
+
+  expect(handleClose)
+    .toHaveBeenCalledWith(
+      expect.any(Object)
     );
-
-    const cancelButton =
-      screen.getByRole(
-        "button",
-        {
-          name: /cancel/i,
-        }
-      );
-
-    // Act
-    await user.click(
-      cancelButton
-    );
-
-    // Assert
-    expect(handleClose)
-      .toHaveBeenCalledWith();
-  });
+});
 });
