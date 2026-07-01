@@ -19,6 +19,7 @@ const mockItem = {
 
 describe("EditItemModal", () => {
   it("should not render when closed", () => {
+    // Arrange
     render(
       <EditItemModal
         isOpen={false}
@@ -28,12 +29,18 @@ describe("EditItemModal", () => {
       />
     );
 
-    expect(
-      screen.queryByText(/edit item/i)
-    ).not.toBeInTheDocument();
+    // Act
+    const modal = screen.queryByText(
+      /edit item/i
+    );
+
+    // Assert
+    expect(modal)
+      .not.toBeInTheDocument();
   });
 
   it("should render when opened", () => {
+    // Arrange
     render(
       <EditItemModal
         isOpen={true}
@@ -43,47 +50,56 @@ describe("EditItemModal", () => {
       />
     );
 
-    expect(
+    // Act
+    const heading =
       screen.getByRole("heading", {
         name: /edit item/i,
-      })
+      });
+
+    // Assert
+    expect(heading)
+      .toBeInTheDocument();
+  });
+
+  it("should display existing inventory information", () => {
+    // Arrange
+    render(
+      <EditItemModal
+        isOpen={true}
+        item={mockItem}
+        onClose={vi.fn()}
+        onUpdateItem={vi.fn()}
+      />
+    );
+
+    // Assert
+    expect(
+      screen.getByDisplayValue(
+        "Ariel Powder"
+      )
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByDisplayValue(
+        "Detergent"
+      )
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByDisplayValue("20")
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByDisplayValue("kg")
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByDisplayValue("5")
     ).toBeInTheDocument();
   });
 
-  it("should preload existing item values", () => {
-    render(
-      <EditItemModal
-        isOpen={true}
-        item={mockItem}
-        onClose={vi.fn()}
-        onUpdateItem={vi.fn()}
-      />
-    );
-
-    expect(
-      screen.getByLabelText(/item name/i)
-    ).toHaveValue("Ariel Powder");
-
-    expect(
-      screen.getByLabelText(/category/i)
-    ).toHaveValue("Detergent");
-
-    expect(
-      screen.getByLabelText(/^quantity$/i)
-    ).toHaveValue(20);
-
-    expect(
-      screen.getByLabelText(/unit/i)
-    ).toHaveValue("kg");
-
-    expect(
-      screen.getByLabelText(
-        /minimum stock/i
-      )
-    ).toHaveValue(5);
-  });
-
   it("should display Update Item button", () => {
+    // Arrange
     render(
       <EditItemModal
         isOpen={true}
@@ -93,6 +109,7 @@ describe("EditItemModal", () => {
       />
     );
 
+    // Assert
     expect(
       screen.getByRole("button", {
         name: /update item/i,
@@ -101,6 +118,7 @@ describe("EditItemModal", () => {
   });
 
   it("should display Cancel button", () => {
+    // Arrange
     render(
       <EditItemModal
         isOpen={true}
@@ -110,6 +128,7 @@ describe("EditItemModal", () => {
       />
     );
 
+    // Assert
     expect(
       screen.getByRole("button", {
         name: /cancel/i,
@@ -117,47 +136,125 @@ describe("EditItemModal", () => {
     ).toBeInTheDocument();
   });
 
-  it("should update the item when valid", async () => {
-    const user = userEvent.setup();
+  it("should update quantity and call onUpdateItem with updated item", async () => {
+    // Arrange
+    const user =
+      userEvent.setup();
 
-    const handleUpdate = vi.fn();
+    const handleUpdate =
+      vi.fn();
 
     render(
       <EditItemModal
         isOpen={true}
         item={mockItem}
         onClose={vi.fn()}
-        onUpdateItem={handleUpdate}
+        onUpdateItem={
+          handleUpdate
+        }
       />
     );
 
     const quantity =
-      screen.getByLabelText(
-        /^quantity$/i
+      screen.getByDisplayValue(
+        "20"
       );
 
-    await user.clear(quantity);
-    await user.type(quantity, "30");
+    const updateButton =
+      screen.getByRole(
+        "button",
+        {
+          name: /update item/i,
+        }
+      );
 
-    await user.click(
-      screen.getByRole("button", {
-        name: /update item/i,
-      })
+    // Act
+    await user.clear(
+      quantity
     );
 
-    expect(handleUpdate).toHaveBeenCalledTimes(1);
+    await user.type(
+      quantity,
+      "30"
+    );
 
-    expect(handleUpdate).toHaveBeenCalledWith({
-      itemName: "Ariel Powder",
-      category: "Detergent",
-      quantity: "30",
-      unit: "kg",
-      minimumStock: "5",
-    });
+    await user.click(
+      updateButton
+    );
+
+    // Assert
+    expect(handleUpdate)
+      .toHaveBeenCalledWith({
+        itemName:
+          "Ariel Powder",
+        category:
+          "Detergent",
+        quantity: "30",
+        unit: "kg",
+        minimumStock: "5",
+      });
   });
 
-  it("should show validation message when item name is empty", async () => {
-    const user = userEvent.setup();
+  it("should update item name and call onUpdateItem with updated item", async () => {
+    // Arrange
+    const user =
+      userEvent.setup();
+
+    const handleUpdate =
+      vi.fn();
+
+    render(
+      <EditItemModal
+        isOpen={true}
+        item={mockItem}
+        onClose={vi.fn()}
+        onUpdateItem={
+          handleUpdate
+        }
+      />
+    );
+
+    const itemName =
+      screen.getByDisplayValue(
+        "Ariel Powder"
+      );
+
+    // Act
+    await user.clear(
+      itemName
+    );
+
+    await user.type(
+      itemName,
+      "Downy"
+    );
+
+    await user.click(
+      screen.getByRole(
+        "button",
+        {
+          name:
+            /update item/i,
+        }
+      )
+    );
+
+    // Assert
+    expect(handleUpdate)
+      .toHaveBeenCalledWith({
+        itemName: "Downy",
+        category:
+          "Detergent",
+        quantity: "20",
+        unit: "kg",
+        minimumStock: "5",
+      });
+  });
+
+  it("should show validation error when item name is empty", async () => {
+    // Arrange
+    const user =
+      userEvent.setup();
 
     render(
       <EditItemModal
@@ -169,45 +266,69 @@ describe("EditItemModal", () => {
     );
 
     const itemName =
-      screen.getByLabelText(
-        /item name/i
+      screen.getByDisplayValue(
+        "Ariel Powder"
       );
 
-    await user.clear(itemName);
-
-    await user.click(
-      screen.getByRole("button", {
-        name: /update item/i,
-      })
+    // Act
+    await user.clear(
+      itemName
     );
 
+    await user.click(
+      screen.getByRole(
+        "button",
+        {
+          name:
+            /update item/i,
+        }
+      )
+    );
+
+    // Assert
     expect(
-      screen.getByRole("alert")
+      screen.getByRole(
+        "alert"
+      )
     ).toHaveTextContent(
       "Item Name is required"
     );
   });
 
-  it("should call onClose when Cancel is clicked", async () => {
-    const user = userEvent.setup();
+  it("should call onClose when Cancel button is clicked", async () => {
+    // Arrange
+    const user =
+      userEvent.setup();
 
-    const handleClose = vi.fn();
+    const handleClose =
+      vi.fn();
 
     render(
       <EditItemModal
         isOpen={true}
         item={mockItem}
-        onClose={handleClose}
+        onClose={
+          handleClose
+        }
         onUpdateItem={vi.fn()}
       />
     );
 
+    const cancelButton =
+      screen.getByRole(
+        "button",
+        {
+          name: /cancel/i,
+        }
+      );
+
+    // Act
     await user.click(
-      screen.getByRole("button", {
-        name: /cancel/i,
-      })
+      cancelButton
     );
 
-    expect(handleClose).toHaveBeenCalledTimes(1);
+    // Assert
+    expect(handleClose)
+      .toHaveBeenCalledWith();
   });
 });

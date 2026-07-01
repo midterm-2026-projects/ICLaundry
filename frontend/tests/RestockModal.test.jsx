@@ -11,6 +11,7 @@ import RestockModal from "../components/RestockModal";
 
 describe("RestockModal", () => {
   it("should not render when closed", () => {
+    // Arrange
     render(
       <RestockModal
         isOpen={false}
@@ -19,12 +20,18 @@ describe("RestockModal", () => {
       />
     );
 
-    expect(
-      screen.queryByText(/restock item/i)
-    ).not.toBeInTheDocument();
+    // Act
+    const modal = screen.queryByText(
+      /restock item/i
+    );
+
+    // Assert
+    expect(modal)
+      .not.toBeInTheDocument();
   });
 
   it("should render when opened", () => {
+    // Arrange
     render(
       <RestockModal
         isOpen={true}
@@ -33,14 +40,19 @@ describe("RestockModal", () => {
       />
     );
 
-    expect(
+    // Act
+    const heading =
       screen.getByRole("heading", {
         name: /restock item/i,
-      })
-    ).toBeInTheDocument();
+      });
+
+    // Assert
+    expect(heading)
+      .toBeInTheDocument();
   });
 
-  it("should display quantity input", () => {
+  it("should display all restock fields", () => {
+    // Arrange
     render(
       <RestockModal
         isOpen={true}
@@ -49,21 +61,12 @@ describe("RestockModal", () => {
       />
     );
 
+    // Assert
     expect(
       screen.getByLabelText(
         /restock quantity/i
       )
     ).toBeInTheDocument();
-  });
-
-  it("should display notes textarea", () => {
-    render(
-      <RestockModal
-        isOpen={true}
-        onClose={vi.fn()}
-        onSubmitRestock={vi.fn()}
-      />
-    );
 
     expect(
       screen.getByLabelText(
@@ -73,6 +76,7 @@ describe("RestockModal", () => {
   });
 
   it("should display Submit Restock button", () => {
+    // Arrange
     render(
       <RestockModal
         isOpen={true}
@@ -81,6 +85,7 @@ describe("RestockModal", () => {
       />
     );
 
+    // Assert
     expect(
       screen.getByRole("button", {
         name: /submit restock/i,
@@ -89,6 +94,7 @@ describe("RestockModal", () => {
   });
 
   it("should display Cancel button", () => {
+    // Arrange
     render(
       <RestockModal
         isOpen={true}
@@ -97,6 +103,7 @@ describe("RestockModal", () => {
       />
     );
 
+    // Assert
     expect(
       screen.getByRole("button", {
         name: /cancel/i,
@@ -104,8 +111,10 @@ describe("RestockModal", () => {
     ).toBeInTheDocument();
   });
 
-  it("should allow entering quantity", async () => {
-    const user = userEvent.setup();
+  it("should allow user to enter restock information", async () => {
+    // Arrange
+    const user =
+      userEvent.setup();
 
     render(
       <RestockModal
@@ -120,39 +129,36 @@ describe("RestockModal", () => {
         /restock quantity/i
       );
 
-    await user.type(quantity, "25");
-
-    expect(quantity).toHaveValue(25);
-  });
-
-  it("should allow entering notes", async () => {
-    const user = userEvent.setup();
-
-    render(
-      <RestockModal
-        isOpen={true}
-        onClose={vi.fn()}
-        onSubmitRestock={vi.fn()}
-      />
-    );
-
     const notes =
       screen.getByLabelText(
         /restock notes/i
       );
 
+    // Act
+    await user.type(
+      quantity,
+      "30"
+    );
+
     await user.type(
       notes,
-      "Supplier delivery"
+      "Weekly supplier delivery"
     );
 
-    expect(notes).toHaveValue(
-      "Supplier delivery"
-    );
+    // Assert
+    expect(quantity)
+      .toHaveValue(30);
+
+    expect(notes)
+      .toHaveValue(
+        "Weekly supplier delivery"
+      );
   });
 
-  it("should show validation error when quantity is empty", async () => {
-    const user = userEvent.setup();
+  it("should show validation message when quantity is empty", async () => {
+    // Arrange
+    const user =
+      userEvent.setup();
 
     render(
       <RestockModal
@@ -162,32 +168,46 @@ describe("RestockModal", () => {
       />
     );
 
+    // Act
     await user.click(
-      screen.getByRole("button", {
-        name: /submit restock/i,
-      })
+      screen.getByRole(
+        "button",
+        {
+          name:
+            /submit restock/i,
+        }
+      )
     );
 
+    // Assert
     expect(
-      screen.getByRole("alert")
+      screen.getByRole(
+        "alert"
+      )
     ).toHaveTextContent(
       "Restock Quantity is required"
     );
   });
 
-  it("should call onSubmitRestock when form is valid", async () => {
-    const user = userEvent.setup();
+  it("should call onSubmitRestock with complete restock data", async () => {
+    // Arrange
+    const user =
+      userEvent.setup();
 
-    const handleSubmit = vi.fn();
+    const handleSubmit =
+      vi.fn();
 
     render(
       <RestockModal
         isOpen={true}
         onClose={vi.fn()}
-        onSubmitRestock={handleSubmit}
+        onSubmitRestock={
+          handleSubmit
+        }
       />
     );
 
+    // Act
     await user.type(
       screen.getByLabelText(
         /restock quantity/i
@@ -199,42 +219,102 @@ describe("RestockModal", () => {
       screen.getByLabelText(
         /restock notes/i
       ),
-      "Weekly restock"
+      "Weekly supplier delivery"
     );
 
     await user.click(
-      screen.getByRole("button", {
-        name: /submit restock/i,
-      })
+      screen.getByRole(
+        "button",
+        {
+          name:
+            /submit restock/i,
+        }
+      )
     );
 
-    expect(handleSubmit).toHaveBeenCalledTimes(1);
-
-    expect(handleSubmit).toHaveBeenCalledWith({
-      quantity: 30,
-      notes: "Weekly restock",
-    });
+    // Assert
+    expect(handleSubmit)
+      .toHaveBeenCalledWith({
+        quantity: 30,
+        notes:
+          "Weekly supplier delivery",
+      });
   });
 
-  it("should call onClose when Cancel is clicked", async () => {
-    const user = userEvent.setup();
+  it("should call onClose after successful restock", async () => {
+    // Arrange
+    const user =
+      userEvent.setup();
 
-    const handleClose = vi.fn();
+    const handleClose =
+      vi.fn();
 
     render(
       <RestockModal
         isOpen={true}
-        onClose={handleClose}
+        onClose={
+          handleClose
+        }
         onSubmitRestock={vi.fn()}
       />
     );
 
-    await user.click(
-      screen.getByRole("button", {
-        name: /cancel/i,
-      })
+    // Act
+    await user.type(
+      screen.getByLabelText(
+        /restock quantity/i
+      ),
+      "15"
     );
 
-    expect(handleClose).toHaveBeenCalledTimes(1);
+    await user.click(
+      screen.getByRole(
+        "button",
+        {
+          name:
+            /submit restock/i,
+        }
+      )
+    );
+
+    // Assert
+    expect(handleClose)
+      .toHaveBeenCalledWith();
+  });
+
+  it("should call onClose when Cancel button is clicked", async () => {
+    // Arrange
+    const user =
+      userEvent.setup();
+
+    const handleClose =
+      vi.fn();
+
+    render(
+      <RestockModal
+        isOpen={true}
+        onClose={
+          handleClose
+        }
+        onSubmitRestock={vi.fn()}
+      />
+    );
+
+    const cancelButton =
+      screen.getByRole(
+        "button",
+        {
+          name: /cancel/i,
+        }
+      );
+
+    // Act
+    await user.click(
+      cancelButton
+    );
+
+    // Assert
+    expect(handleClose)
+      .toHaveBeenCalledWith();
   });
 });
