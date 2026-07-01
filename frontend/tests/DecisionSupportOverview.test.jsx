@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+﻿import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import DecisionSupportOverview from "../components/DecisionSupportOverview";
 
@@ -32,136 +32,69 @@ const mockRecommendations = [
   },
 ];
 
-describe("DecisionSupportOverview", () => {
+describe("Default Props", () => {
+  it("should render with default recommendations when no prop is passed", () => {
+    render(<DecisionSupportOverview />);
+    expect(screen.getAllByTestId("recommendation-item").length).toBeGreaterThan(0);
+  });
+});
+
+describe("DecisionSupportOverview Panel", () => {
   it("should display the panel container correctly", () => {
-    // Arrange
-    const recommendations = mockRecommendations;
-
-    // Act
-    render(<DecisionSupportOverview recommendations={recommendations} />);
-
-    // Assert
+    render(<DecisionSupportOverview recommendations={mockRecommendations} />);
     expect(screen.getByTestId("decision-support-panel")).toBeTruthy();
   });
-
   it("should display the section header label", () => {
-    // Arrange
-    const recommendations = mockRecommendations;
-
-    // Act
-    render(<DecisionSupportOverview recommendations={recommendations} />);
-
-    // Assert
+    render(<DecisionSupportOverview recommendations={mockRecommendations} />);
     expect(screen.getByText("Decision Support Overview")).toBeTruthy();
   });
-
   it("should display the Predictions button", () => {
-    // Arrange
-    const recommendations = mockRecommendations;
-
-    // Act
-    render(<DecisionSupportOverview recommendations={recommendations} />);
-
-    // Assert
+    render(<DecisionSupportOverview recommendations={mockRecommendations} />);
     expect(screen.getByTestId("predictions-button")).toBeTruthy();
   });
+});
 
+describe("Recommendation Items", () => {
   it("should render all recommendation items", () => {
-    // Arrange
-    const recommendations = mockRecommendations;
-
-    // Act
-    render(<DecisionSupportOverview recommendations={recommendations} />);
-
-    // Assert
-    const items = screen.getAllByTestId("recommendation-item");
-    expect(items.length).toEqual(3);
+    render(<DecisionSupportOverview recommendations={mockRecommendations} />);
+    expect(screen.getAllByTestId("recommendation-item")).toHaveLength(3);
   });
-
-  it("should display predicted revenue with correct value", () => {
-    // Arrange
-    const recommendations = mockRecommendations;
-
-    // Act
-    render(<DecisionSupportOverview recommendations={recommendations} />);
-
-    // Assert
+  it("should display predicted revenue", () => {
+    render(<DecisionSupportOverview recommendations={mockRecommendations} />);
     expect(screen.getByText("Predicted Revenue:")).toBeTruthy();
     expect(screen.getByText("₱171")).toBeTruthy();
     expect(screen.getByText("Next Month")).toBeTruthy();
   });
-
-  it("should display restock alert details correctly", () => {
-    // Arrange
-    const recommendations = mockRecommendations;
-
-    // Act
-    render(<DecisionSupportOverview recommendations={recommendations} />);
-
-    // Assert
+  it("should display restock alerts", () => {
+    render(<DecisionSupportOverview recommendations={mockRecommendations} />);
     expect(screen.getByText("ariel powder")).toBeTruthy();
     expect(screen.getByText("bleach powder")).toBeTruthy();
     expect(screen.getByText("0 days")).toBeTruthy();
     expect(screen.getByText("2 days")).toBeTruthy();
   });
-
-  it("should render restock buttons for restock-type recommendations", () => {
-    // Arrange
-    const recommendations = mockRecommendations;
-
-    // Act
-    render(<DecisionSupportOverview recommendations={recommendations} />);
-
-    // Assert
-    const buttons = screen.getAllByTestId("restock-button");
-    expect(buttons.length).toEqual(2);
+  it("should display reorder details", () => {
+    render(<DecisionSupportOverview recommendations={mockRecommendations} />);
+    expect(screen.getByText("Reorder ~521 pcs")).toBeTruthy();
+    expect(screen.getByText("Reorder ~1110 pcs")).toBeTruthy();
   });
+});
 
-  it("should apply correct background color for revenue type", () => {
-    // Arrange
-    const recommendations = mockRecommendations;
+describe("Buttons", () => {
+  it("should render restock buttons", () => {
+    render(<DecisionSupportOverview recommendations={mockRecommendations} />);
+    expect(screen.getAllByTestId("restock-button")).toHaveLength(2);
+  });
+});
 
-    // Act
-    render(<DecisionSupportOverview recommendations={recommendations} />);
-
-    // Assert
+describe("Styles", () => {
+  it("should apply revenue background color", () => {
+    render(<DecisionSupportOverview recommendations={mockRecommendations} />);
     const items = screen.getAllByTestId("recommendation-item");
     expect(items[0].style.backgroundColor).toBe("rgb(236, 253, 245)");
   });
-
-  it("should apply correct background color for restock type", () => {
-    // Arrange
-    const recommendations = mockRecommendations;
-
-    // Act
-    render(<DecisionSupportOverview recommendations={recommendations} />);
-
-    // Assert
+  it("should apply restock background color", () => {
+    render(<DecisionSupportOverview recommendations={mockRecommendations} />);
     const items = screen.getAllByTestId("recommendation-item");
     expect(items[1].style.backgroundColor).toBe("rgb(255, 251, 235)");
-    expect(items[2].style.backgroundColor).toBe("rgb(255, 251, 235)");
-  });
-
-  it("should render with default recommendations when no prop is passed", () => {
-    // Arrange
-
-    // Act
-    render(<DecisionSupportOverview />);
-
-    // Assert
-    const items = screen.getAllByTestId("recommendation-item");
-    expect(items.length).toBeGreaterThan(0);
-  });
-
-  it("should display reorder details for restock items", () => {
-    // Arrange
-    const recommendations = mockRecommendations;
-
-    // Act
-    render(<DecisionSupportOverview recommendations={recommendations} />);
-
-    // Assert
-    expect(screen.getByText("Reorder ~521 pcs")).toBeTruthy();
-    expect(screen.getByText("Reorder ~1110 pcs")).toBeTruthy();
   });
 });
