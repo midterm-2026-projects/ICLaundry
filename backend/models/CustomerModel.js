@@ -1,4 +1,4 @@
-import { getMockCustomers } from "../data/mockCustomers.js";
+
 
 export const insertCustomer = (customer) => {
   const customers = getMockCustomers();
