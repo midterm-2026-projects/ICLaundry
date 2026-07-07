@@ -2,7 +2,7 @@
 
 ## Objective #2
 **Owner:** Richelle Anne L. Roxas  
-**Title:** Develop the Business Analytics Dashboard & Reporting Tools  
+**Title:** Develop the Business Analytics Dashboard & Reporting Tools
 
 ---
 
@@ -34,7 +34,7 @@ Responsible for designing, developing, and implementing business analytics dashb
 
 | Day | Task | Sub-Tasks | Deliverables | Test / Acceptance Criteria |
 |-----|------|-----------|--------------|----------------------------|
-| Day 1 | Implement Data Visualization Charts | Create Weekly Orders chart, Weekly Revenue Trend chart, design containers, implement loading/empty states, style charts, ensure side-by-side layout | Weekly Orders chart, Revenue Trend chart | Charts render properly, correct layout alignment, styling matches reference, handles empty/loading states |
+| Day 1 | Implement Analytics Charts & Backend Analytics Service | Create Weekly Orders Bar Chart and Weekly Revenue Trend Line Chart, implement Weekly/Monthly/Yearly period selection, design responsive chart containers, implement loading and empty states, create the Order model, develop the Order Analytics Service using MongoDB aggregation for weekly, monthly, and yearly analytics, format analytics data for frontend consumption, and implement backend unit tests using Vitest with mocked database responses | Analytics Charts module, Order Model, Order Analytics Service, Analytics data formatter, Backend unit tests | Charts render correctly, period switching works properly, layout matches the dashboard design, loading and empty states display correctly, analytics service returns valid labels, orders, and revenue data, invalid analytics period throws an error, and all backend unit tests pass successfully |
 | Day 2 | Develop Recent Orders Table | Create table (Order ID, Customer, Status, Waiting Time, Amount), design status badges, implement pagination, add row styling, alternating colors, fix alignment | Recent Orders table, status badges, pagination | Table displays correctly, pagination works, status badges accurate, layout matches design |
 
 ---
@@ -61,16 +61,21 @@ Responsible for designing, developing, and implementing business analytics dashb
 
 | Day | Task | Sub-Tasks | Deliverables | Test / Acceptance Criteria |
 |-----|------|-----------|--------------|----------------------------|
-| Day 1 | Final Styling & System Integration | Standardize UI styles, test all components, fix spacing issues, ensure responsiveness, validate charts/tables/forms, complete integration | Final dashboard system | UI matches reference, no broken components, responsive design works, full system functional |
+| Day 1 | Final Styling & System Integration | Standardize UI styles, test all components, fix spacing issues, ensure responsiveness, validate charts, tables, and forms, complete system integration | Final dashboard system | UI matches reference, no broken components, responsive design works, full system functional |
 
 ---
 
-## Final Output
+# Final Output
+
 A fully functional **Business Analytics Dashboard & Reporting System** with:
+
 - Real-time analytics dashboard
 - Alerts & decision support system
 - AI insights module
-- Charts & reporting tools
-- Orders management table
+- Analytics charts and reporting tools
+- Recent orders management table
 - Settings, pricing, and ETA configuration
+- Backend analytics service for weekly, monthly, and yearly reporting
+- MongoDB aggregation-based analytics processing
+- Backend unit testing using Vitest
 - Full Supabase integration
