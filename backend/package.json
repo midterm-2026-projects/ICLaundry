@@ -1,0 +1,12 @@
+{
+  "devDependencies": {
+    "vitest": "^4.1.10"
+  },
+ "scripts": {
+    "test": "vitest",
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  }
+}
