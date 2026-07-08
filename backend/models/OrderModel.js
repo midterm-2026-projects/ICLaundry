@@ -1,29 +1,40 @@
 // backend/models/OrderModel.js
 
-let orders = [
-  {
-    id: 1,
-    orderDate: new Date("2026-07-06"),
-    totalAmount: 400,
-    status: "Completed",
-  },
-  {
-    id: 2,
-    orderDate: new Date("2026-07-07"),
-    totalAmount: 110,
-    status: "Completed",
-  },
-  {
-    id: 3,
-    orderDate: new Date("2026-07-08"),
-    totalAmount: 260,
-    status: "Completed",
-  },
-];
+let orders = [];
+
+// Create Order
+export const insertOrder = (order) => {
+  const newOrder = {
+    id: orders.length + 1,
+    ...order,
+  };
+
+  orders.push(newOrder);
+
+  return newOrder;
+};
 
 // Read Orders
 export const getOrders = () => {
   return orders;
+};
+
+// Update Order
+export const updateOrder = (id, updatedOrder) => {
+  const orderIndex = orders.findIndex(
+    (order) => order.id === Number(id)
+  );
+
+  if (orderIndex === -1) {
+    return null;
+  }
+
+  orders[orderIndex] = {
+    ...orders[orderIndex],
+    ...updatedOrder,
+  };
+
+  return orders[orderIndex];
 };
 
 // Used only for unit tests
