@@ -6,7 +6,7 @@
 
 **Objective Description**
 
-Responsible for developing customer, transaction, payment, order status, and branch management modules, integrating them with Supabase, and conducting testing to ensure reliable and synchronized system operations.
+Responsible for developing customer, transaction, payment, order status, and branch management modules, integrating backend services, implementing business logic, and conducting unit testing to ensure reliable and synchronized system operations.
 
 ---
 
@@ -18,12 +18,12 @@ Responsible for developing customer, transaction, payment, order status, and bra
 | **Week 2** | **Day 1** | Develop Laundry Transaction UI Components | Create Status Filter Tabs, Search Orders Component, Orders Table, New Order Button, New Order Modal, Phone Number Input, Client Name Input, Weight Input, Add-ons Selection, Add-on Quantity Controls, Edit Order Modal | Status Filter Component, Orders Table Component, New Order Modal, Edit Order Modal | Display all order status filter tabs. Display Search Orders component. Display Orders table with Order Number, Customer, Weight, Status, Payment, Amount, Date, and Actions columns. Open New Order Modal. Display order fields. Open Edit Order Modal. |
 | **Week 2** | **Day 2** | Develop Payment and Order Status UI Components | Create Price Breakdown Card, Laundry Cost Display, Total Amount Display, Payment Method Dropdown, Amount Paid Input, Payment Status Badge, Order Progress Tracker, Order Status Badge, Time Left Display | Price Breakdown Component, Payment Section Component, Status Tracker Component, Status Badge Component | Display Price Breakdown card. Display Laundry Cost and Total Amount values. Display Payment Method dropdown. Display Amount Paid field. Display Paid and Partial badges. Display Order Progress Tracker. Display Order Status badge. Display Time Left field. |
 | **Week 3** | **Day 1** | **Develop Customer Management Backend Module** | Create Mock Customer Data Source, Create Customer Model, Create Customer Validation Module, Implement Create Customer Service, Implement Read Customer Service, Implement Update Customer Service, Implement Delete Customer Service, Create Customer Service Unit Tests using Vitest (`vi.mock()`) | Mock Customer Data Module, Customer Model, Customer Validation Module, Customer CRUD Service Layer, Customer Service Unit Test Suite | Successfully create customer records in the mock customer data source. Successfully retrieve customer records through the Customer Model. Successfully update existing customer records. Successfully delete existing customer records. Validate required customer information before performing CRUD operations. Call the appropriate Customer Model function through each Customer Service. Pass all Customer Service unit tests using Vitest with mocked model dependencies (`vi.mock()`). |
-| **Week 3** | **Day 2** | Integrate Laundry Transaction Management with Supabase | Create Orders Table, Order Schema Definition, Connect Orders UI Components, Implement Create, Read, and Update Functions, Associate Customers with Orders | Orders Table Schema, Order CRUD API, Orders Database Integration | Create order records. Retrieve order records. Update order records. Associate customers with orders. Display updated records immediately after database operations. |
+| **Week 3** | **Day 2** | **Develop Customer Order Management Backend Module** | Create Customer Order Model, Create Customer Order Validation Module, Implement Create Customer Order Service, Implement Read Customer Order Service, Implement Update Customer Order Service, Implement Customer Order Data Source, Create Customer Order Service Unit Tests using Vitest (`vi.mock()`), Simulate Customer Order CRUD Operations | Customer Order Model, Customer Order Validation Module, Customer Order Service Layer, Customer Order Unit Test Suite | Successfully create customer order records. Successfully retrieve customer order records. Successfully update existing customer order records. Successfully associate customer records with customer order transactions. Validate required customer order information before performing Create and Update operations. Call the appropriate Customer Order Model function through each Customer Order Service. Display updated customer order records immediately after Create and Update operations. Pass all Customer Order Service unit tests using Vitest with mocked model dependencies (`vi.mock()`). |
 | **Week 4** | **Day 1** | Integrate Payment and Order Status Management | Create Payments Table, Payment Schema Definition, Connect Payment Components, Implement Create and Update Payment Functions, Connect Order Status Tracking | Payments Table Schema, Payment Integration Module, Order Status Integration Module | Store payment records. Update payment information. Display Paid and Partial badges. Update order statuses. Display updated order progress. |
 | **Week 4** | **Day 2** | Integrate Staff and Branch Management | Create Staff Table, Branches Table, Connect Staff UI Components, Implement Create and Update Staff Functions, Branch Assignment, Staff Role Management | Staff Table Schema, Branches Table Schema, Staff CRUD API, Branch Assignment Module | Create staff records. Retrieve staff records. Update staff information. Assign branches to staff. Display assigned branch and role. |
-| **Week 5** | **Day 1** | Conduct End-to-End Testing for Customer and Order Management | Test Add Customer, Edit Customer, Delete Customer, Create Order, Edit Order Workflows, Fix UI and Validation Issues | E2E Test Report, Bug Fix Report, Updated Modules | Successfully add, edit, and delete customers. Successfully create and update laundry orders. |
+| **Week 5** | **Day 1** | Conduct End-to-End Testing for Customer and Order Management | Test Add Customer, Edit Customer, Delete Customer, Create Customer Order, Edit Customer Order Workflows, Fix UI and Validation Issues | E2E Test Report, Bug Fix Report, Updated Modules | Successfully add, edit, and delete customers. Successfully create and update customer orders. |
 | **Week 5** | **Day 2** | Conduct End-to-End Testing for Payment and Staff Operations | Test Payment Workflow, Payment Status Workflow, Order Status Workflow, Add Staff Workflow, Edit Staff Workflow, Fix Integration Issues | E2E Test Report, Bug Fix Report, Updated Modules | Successfully store payment records. Correctly display payment status badges. Correctly update order statuses. Successfully create and update staff records and branch assignments. |
-| **Week 6** | **Day 1** | Final System Validation and Documentation | Execute Full Workflow Testing, Validate Customer, Orders, Payment, and Staff Modules, Resolve Issues, Update Documentation | Final Testing Report, Technical Documentation, Fully Integrated System | Successfully execute all system workflows. Synchronize all modules with Supabase. Pass all documented end-to-end test scenarios without critical defects. |
+| **Week 6** | **Day 1** | Final System Validation and Documentation | Execute Full Workflow Testing, Validate Customer, Customer Order, Payment, and Staff Modules, Resolve Issues, Update Documentation | Final Testing Report, Technical Documentation, Fully Integrated System | Successfully execute all system workflows. Validate Customer, Customer Order, Payment, Staff, and Branch modules. Pass all documented end-to-end test scenarios without critical defects. |
 
 ---
 
@@ -40,23 +40,28 @@ Responsible for developing customer, transaction, payment, order status, and bra
 
 ### Backend Modules
 
-- Customer CRUD API
-- Order CRUD API
+- Customer CRUD Service Layer
+- Customer Order Service Layer
 - Payment Integration Module
 - Staff CRUD API
 - Branch Assignment Module
 
-### Database Schemas
+### Backend Models
 
-- Customers Table
-- Orders Table
-- Payments Table
-- Staff Table
-- Branches Table
+- Customer Model
+- Customer Order Model
+- Payment Module
+- Staff Module
+
+### Validation Modules
+
+- Customer Validation Module
+- Customer Order Validation Module
 
 ### Testing Deliverables
 
-- Unit Test Suite
+- Customer Service Unit Test Suite
+- Customer Order Service Unit Test Suite
 - Integration Test Suite
 - End-to-End Test Reports
 - Bug Fix Reports
@@ -69,4 +74,4 @@ Responsible for developing customer, transaction, payment, order status, and bra
 
 ### Final Output
 
-A fully integrated Laundry Management System with synchronized Customer, Transaction, Payment, Staff, and Branch Management modules powered by Supabase.
+A fully tested Laundry Management System with Customer, Customer Order, Payment, Order Status, Staff, and Branch Management modules supported by backend service layers, validation modules, and comprehensive unit testing using Vitest.
