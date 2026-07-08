@@ -1,22 +1,32 @@
 // backend/models/OrderModel.js
-import mongoose from "mongoose";
 
-const OrderSchema = new mongoose.Schema({
-  orderDate: {
-    type: Date,
-    required: true,
-    default: Date.now
+let orders = [
+  {
+    id: 1,
+    orderDate: new Date("2026-07-06"),
+    totalAmount: 400,
+    status: "Completed",
   },
-  totalAmount: {
-    type: Number,
-    required: true,
-    min: 0
+  {
+    id: 2,
+    orderDate: new Date("2026-07-07"),
+    totalAmount: 110,
+    status: "Completed",
   },
-  status: {
-    type: String,
-    enum: ["pending", "completed", "cancelled"],
-    default: "completed"
-  }
-});
+  {
+    id: 3,
+    orderDate: new Date("2026-07-08"),
+    totalAmount: 260,
+    status: "Completed",
+  },
+];
 
-export default mongoose.model("Order", OrderSchema);
+// Read Orders
+export const getOrders = () => {
+  return orders;
+};
+
+// Used only for unit tests
+export const resetOrders = (newOrders = []) => {
+  orders = [...newOrders];
+};
