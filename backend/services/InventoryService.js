@@ -3,10 +3,16 @@ import {
   getInventoryItems,
   updateInventoryItem,
   deleteInventoryItem,
+  insertInventoryRestock,
+  getInventoryRestocks,
+  updateInventoryStock,
 } from "../models/InventoryModel.js";
 
-const validateInventoryItem = (item) => {
+// -------------------------------------
+// Inventory Validation
+// -------------------------------------
 
+const validateInventoryItem = (item) => {
   if (!item.name || item.name.trim() === "") {
     throw new Error("Item name is required");
   }
@@ -57,38 +63,49 @@ const validateInventoryItem = (item) => {
   ) {
     throw new Error("Usage per load cannot be negative");
   }
-
 };
 
 const validateInventoryId = (id) => {
-
   if (!id) {
     throw new Error("Inventory ID is required");
   }
-
 };
 
-// Create Inventory Item
-export const createInventoryItem = (item) => {
+// -------------------------------------
+// Restock Validation
+// -------------------------------------
 
+const validateInventoryRestock = (inventoryRestock) => {
+  if (!inventoryRestock.item_id) {
+    throw new Error("Inventory Item ID is required");
+  }
+
+  if (
+    inventoryRestock.quantity_added === undefined ||
+    inventoryRestock.quantity_added === null ||
+    Number(inventoryRestock.quantity_added) <= 0
+  ) {
+    throw new Error("Restock quantity is required");
+  }
+};
+
+// -------------------------------------
+// Inventory CRUD
+// -------------------------------------
+
+export const createInventoryItem = (item) => {
   validateInventoryItem(item);
 
   insertInventoryItem(item);
 
   return "Inventory item created successfully";
-
 };
 
-// Read Inventory Items
 export const readInventoryItems = () => {
-
   return getInventoryItems();
-
 };
 
-// Update Inventory Item
 export const editInventoryItem = (id, item) => {
-
   validateInventoryId(id);
 
   validateInventoryItem(item);
@@ -100,12 +117,9 @@ export const editInventoryItem = (id, item) => {
   }
 
   return "Inventory item updated successfully";
-
 };
 
-// Delete Inventory Item
 export const removeInventoryItem = (id) => {
-
   validateInventoryId(id);
 
   const deletedItem = deleteInventoryItem(id);
@@ -115,5 +129,53 @@ export const removeInventoryItem = (id) => {
   }
 
   return "Inventory item deleted successfully";
+};
 
+// -------------------------------------
+// Inventory Restock
+// -------------------------------------
+
+export const createInventoryRestock = (inventoryRestock) => {
+  validateInventoryRestock(inventoryRestock);
+
+  insertInventoryRestock(inventoryRestock);
+
+  updateInventoryStock(
+    inventoryRestock.item_id,
+    inventoryRestock.quantity_added,
+  );
+
+  return "Inventory restocked successfully";
+};
+
+export const readInventoryRestocks = () => {
+  return getInventoryRestocks();
+};
+
+// -------------------------------------
+// Stock Monitoring
+// -------------------------------------
+
+export const checkStockStatus = (itemId) => {
+  validateInventoryId(itemId);
+
+  const inventoryItem = getInventoryItems().find(
+    (item) => item.id === Number(itemId),
+  );
+
+  if (!inventoryItem) {
+    throw new Error("Inventory item not found");
+  }
+
+  if (Number(inventoryItem.current_stock) === 0) {
+    return "Out of Stock";
+  }
+
+  if (
+    Number(inventoryItem.current_stock) <= Number(inventoryItem.minimum_stock)
+  ) {
+    return "Low Stock";
+  }
+
+  return "In Stock";
 };
