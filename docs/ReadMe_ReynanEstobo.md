@@ -1,37 +1,195 @@
-## Objective #: 1
+# Objective #1
 
 **Owner (Member Name):** Reynan M. Estobo
 
-**Objective Title:** Develop the Centralized Customer, Transaction, and Branch Management System
+**Objective Title:** Develop the Centralized Customer, Transaction, and
+Branch Management System
 
-**Objective Description**
+## Objective Description
 
-Responsible for developing customer, transaction, payment, order status, and branch management modules, integrating backend services, implementing business logic, and conducting unit testing to ensure reliable and synchronized system operations.
+Responsible for developing customer, transaction, payment, order status,
+and branch management modules, integrating backend services,
+implementing business logic, frontend integration, and comprehensive
+testing to ensure reliable and synchronized system operations.
 
 ---
 
-## 5-Week Task Breakdown
+# 5-Week Task Breakdown
 
-| Week       | Day       | Task Description                                            | Sub-Tasks (Breakdown)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Deliverable(s)                                                                                                                                                                           | Test Suite / PR Acceptance Criteria                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| ---------- | --------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Week 1** | **Day 1** | Develop Customer Management UI Components                   | Create Customer Search Bar, Customer Table, Add Customer Button, Add Customer Modal, Full Name Input, Phone Number Input, Email Input, Notes Textarea, Edit Customer Modal, Update Button, Delete Button                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Customer Table Component, Search Component, Add Customer Modal, Edit Customer Modal, Validation Module                                                                                   | Display Customer Search Bar. Display Customer Table with Name, Phone, Email, Added Date, and Actions columns. Open Add Customer Modal. Display Full Name, Phone Number, Email, and Notes fields. Open Edit Customer Modal. Display Update and Delete buttons. Prevent submission when required fields are empty.                                                                                                                                                                                                                                                                                           |
-| **Week 2** | **Day 1** | Develop Laundry Transaction UI Components                   | Create Status Filter Tabs, Search Orders Component, Orders Table, New Order Button, New Order Modal, Phone Number Input, Client Name Input, Weight Input, Add-ons Selection, Add-on Quantity Controls, Edit Order Modal                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Status Filter Component, Orders Table Component, New Order Modal, Edit Order Modal                                                                                                       | Display all order status filter tabs. Display Search Orders component. Display Orders table with Order Number, Customer, Weight, Status, Payment, Amount, Date, and Actions columns. Open New Order Modal. Display order fields. Open Edit Order Modal.                                                                                                                                                                                                                                                                                                                                                    |
-| **Week 2** | **Day 2** | Develop Payment and Order Status UI Components              | Create Price Breakdown Card, Laundry Cost Display, Total Amount Display, Payment Method Dropdown, Amount Paid Input, Payment Status Badge, Order Progress Tracker, Order Status Badge, Time Left Display                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Price Breakdown Component, Payment Section Component, Status Tracker Component, Status Badge Component                                                                                   | Display Price Breakdown card. Display Laundry Cost and Total Amount values. Display Payment Method dropdown. Display Amount Paid field. Display Paid and Partial badges. Display Order Progress Tracker. Display Order Status badge. Display Time Left field.                                                                                                                                                                                                                                                                                                                                              |
-| **Week 3** | **Day 1** | **Develop Customer Management Backend Module**              | Create Mock Customer Data Source, Create Customer Model, Create Customer Validation Module, Implement Create Customer Service, Implement Read Customer Service, Implement Update Customer Service, Implement Delete Customer Service, Create Customer Service Unit Tests using Vitest (`vi.mock()`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Mock Customer Data Module, Customer Model, Customer Validation Module, Customer CRUD Service Layer, Customer Service Unit Test Suite                                                     | Successfully create customer records in the mock customer data source. Successfully retrieve customer records through the Customer Model. Successfully update existing customer records. Successfully delete existing customer records. Validate required customer information before performing CRUD operations. Call the appropriate Customer Model function through each Customer Service. Pass all Customer Service unit tests using Vitest with mocked model dependencies (`vi.mock()`).                                                                                                              |
-| **Week 3** | **Day 2** | **Develop Customer Order Management Backend Module**        | Create Customer Order Model, Create Customer Order Validation Module, Implement Create Customer Order Service, Implement Read Customer Order Service, Implement Update Customer Order Service, Implement Customer Order Data Source, Create Customer Order Service Unit Tests using Vitest (`vi.mock()`), Simulate Customer Order CRUD Operations                                                                                                                                                                                                                                                                                                                                                                                                                                                             | Customer Order Model, Customer Order Validation Module, Customer Order Service Layer, Customer Order Unit Test Suite                                                                     | Successfully create customer order records. Successfully retrieve customer order records. Successfully update existing customer order records. Successfully associate customer records with customer order transactions. Validate required customer order information before performing Create and Update operations. Call the appropriate Customer Order Model function through each Customer Order Service. Display updated customer order records immediately after Create and Update operations. Pass all Customer Order Service unit tests using Vitest with mocked model dependencies (`vi.mock()`). |
-| **Week 4** | **Day 1** | Integrate Payment and Order Status Management               | Create Payments Table, Payment Schema Definition, Connect Payment Components, Implement Create and Update Payment Functions, Connect Order Status Tracking                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Payments Table Schema, Payment Integration Module, Order Status Integration Module                                                                                                       | Store payment records. Update payment information. Display Paid and Partial badges. Update order statuses. Display updated order progress.                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| Week       | Day       | Task Description                                            | Sub-Tasks (Breakdown)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Deliverable(s)                                                                                                                                                                           | Test Suite / PR Acceptance Criteria                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| ------     | -----     | ------------------                                          | -----------------------                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | ----------------                                                                                                                                                                         | -------------------------------------                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| **Week 4** | **Day 2** | **Complete Staff and Branch Management Module**             | • Create Staff database table<br>• Create Branch database table<br>• Create Staff schema definition<br>• Create Branch schema definition<br>• Create Staff Model<br>• Create Branch Model<br>• Create Staff Validation Module<br>• Implement Create Staff function<br>• Implement Read Staff function<br>• Implement Update Staff function<br>• Implement Delete Staff function<br>• Create Staff Controller<br>• Create Branch Controller<br>• Create Staff Routes<br>• Create Branch Routes<br>• Connect Staff page to backend<br>• Connect Staff table UI<br>• Connect Add Staff modal<br>• Connect Edit Staff modal<br>• Implement Branch Assignment<br>• Implement Staff Role Assignment<br>• Create Frontend API Integration<br>• Create Unit Tests<br>• Create API Tests<br>• Create Integration Tests | • Staff Table Schema<br>• Branches Table Schema<br>• Staff CRUD Module<br>• Branch Assignment Module<br>• Backend MVC Module<br>• Frontend Staff Integration<br>• Staff Test Suite       | • It should create staff records.<br>• It should retrieve staff records.<br>• It should update staff information.<br>• It should delete staff records.<br>• It should assign branches correctly.<br>• It should assign staff roles correctly.<br>• It should synchronize frontend and backend.<br>• It should pass all Unit, API, and Integration Tests.                                                                                                                                                                                                                                                   |
-| **Week 5** | **Day 1** | **Integrate Complete Laundry Business Workflow**            | • Validate Customer → Order workflow<br>• Validate Order → Payment workflow<br>• Validate Payment → Order Status workflow<br>• Validate Staff → Branch workflow<br>• Validate automatic customer registration<br>• Validate payment computation<br>• Validate payment status updates<br>• Validate order status progression<br>• Validate inventory deduction after order creation<br>• Validate SMS notification workflow<br>• Validate Email notification workflow<br>• Validate realtime synchronization<br>• Validate search functionality<br>• Validate pagination<br>• Resolve integration issues across modules                                                                                                                                                                                        | • Fully Integrated Customer Module<br>• Fully Integrated Orders Module<br>• Fully Integrated Payment Module<br>• Fully Integrated Order Status Module<br>• Fully Integrated Staff Module | • It should complete the Customer → Order → Payment → Release workflow successfully.<br>• It should automatically update payment status.<br>• It should automatically update order status.<br>• It should automatically deduct inventory.<br>• It should automatically register customers when necessary.<br>• It should synchronize frontend and backend data.<br>• It should pass all Integration Tests successfully.                                                                                                                                                                                    |
-| **Week 5** | **Day 2** | **System Stabilization and Quality Assurance**              | • Improve frontend API integration<br>• Improve backend validation<br>• Improve customer validation<br>• Improve order validation<br>• Improve payment validation<br>• Improve staff validation<br>• Improve API error handling<br>• Improve loading states<br>• Improve realtime synchronization<br>• Refactor duplicated backend logic<br>• Refactor duplicated frontend components<br>• Optimize Services<br>• Optimize Controllers<br>• Optimize reusable React Components<br>• Execute Backend Unit Tests<br>• Execute Backend API Tests<br>• Execute Backend Integration Tests<br>• Execute Frontend Component Tests<br>• Execute Frontend Inter-component Tests<br>• Fix all failing tests                                                                                                             | • Stable Application Build<br>• Optimized Backend<br>• Optimized Frontend<br>• Fully Passing Test Suites                                                                                 | • All Backend Unit Tests should pass.<br>• All Backend API Tests should pass.<br>• All Backend Integration Tests should pass.<br>• All Frontend Component Tests should pass.<br>• All Frontend Inter-component Tests should pass.<br>• No broken workflows should remain.                                                                                                                                                                                                                                                                                                                                  |
-| **Week 6** | **Day 1** | **Final System Validation, Refactoring, and Documentation** | • Execute complete Customer workflow validation<br>• Execute complete Order workflow validation<br>• Execute complete Payment workflow validation<br>• Execute complete Order Status workflow validation<br>• Execute complete Staff workflow validation<br>• Execute complete Branch workflow validation<br>• Execute full Backend Test Suite<br>• Execute full Frontend Test Suite<br>• Execute complete API Test Suite<br>• Execute complete Integration Test Suite<br>• Perform Manual Acceptance Testing<br>• Refactor backend codebase<br>• Refactor frontend components<br>• Remove unused code<br>• Clean project structure<br>• Finalize README documentation<br>• Finalize API documentation<br>• Finalize Technical Documentation<br>• Prepare Final Demonstration<br>• Resolve remaining issues   | • Final Laundry Management System<br>• Final Source Code<br>• Technical Documentation<br>• API Documentation<br>• Final Testing Report<br>• Fully Integrated Application                 | • Customer Management Module should work completely.<br>• Laundry Order Module should work completely.<br>• Payment Module should work completely.<br>• Order Status Module should work completely.<br>• Staff Management Module should work completely.<br>• Branch Management Module should work completely.<br>• Backend and Frontend should be fully synchronized.<br>• All Backend Unit Tests, API Tests, Integration Tests, Frontend Component Tests, and Inter-component Tests should pass successfully.<br>• The application should be ready for final deployment and presentation.                |
+---
+
+Week Day Task Description Sub-Tasks Deliverable(s) Test Suite / PR
+(Breakdown) Acceptance Criteria
+
+---
+
+**Week **Day **Develop Create Customer Customer Table Display Customer Search
+1** 1** Customer Search Bar, Component, Bar, Customer Table, Add
+Management UI Customer Table, Search Customer Modal, Edit
+Components** Add Customer Component, Add Customer Modal,
+Button, Add Customer Modal, Update/Delete actions,
+Customer Modal, Edit Customer and prevent submission
+Full Name Input, Modal, when required fields are
+Phone Number Validation empty.
+Input, Email Module  
+ Input, Notes  
+ Textarea, Edit  
+ Customer Modal,  
+ Update Button,  
+ Delete Button.
+
+**Week **Day **Develop Laundry Create Status Orders UI Display Orders table,
+2** 1** Transaction UI Filters, Search Components filters, search, modals,
+Components** Orders, Orders and transaction entry
+Table, New Order forms.
+Modal, Edit Order  
+ Modal, Client  
+ fields, Weight  
+ field, Add-ons  
+ selector, Quantity  
+ controls.
+
+**Week **Day **Develop Payment Create Price Payment UI Display payment details,
+2** 2** and Order Status Breakdown Card, Module payment status badges,
+UI Components** Payment Section, order progress tracker,
+Payment Method and estimated completion
+Dropdown, Amount time.
+Paid field,  
+ Payment Status  
+ Badge, Status  
+ Tracker, Time Left  
+ Display.
+
+**Week **Day **Develop Create Customer Customer Backend Customer CRUD should
+3** 1** Customer Model, Validation, Module function correctly and
+Management Services, pass unit tests.
+Backend Module** Controller,  
+ Routes, Frontend  
+ API Integration,  
+ CRUD Operations,  
+ Unit Tests.
+
+**Week **Day **Develop Create Order Order Backend Order CRUD should
+3** 2** Customer Order Model, Validation, Module function correctly,
+Management Services, associate customers, and
+Backend Module** Controller, pass tests.
+Routes, Frontend  
+ API Integration,  
+ CRUD Operations,  
+ Customer  
+ association, Unit  
+ Tests.
+
+**Week **Day **Integrate Create Payments Payment Payment records should be
+4** 1** Payment and Order table, Payment Integration stored correctly, payment
+Status Model, Payment Module, Order status should update,
+Management** Service, Payment Status Module order progress should
+Controller, synchronize with the
+Payment Routes, database, and all tests
+Frontend Payment should pass.
+API, Initial and  
+ Complete Payment  
+ workflow, Order  
+ Status Service,  
+ Order Status  
+ Controller, Status  
+ Tracker  
+ integration, Unit  
+ Tests, API Tests,  
+ Integration Tests,  
+ Frontend Component  
+ Tests.
+
+**Week **Day **Complete Staff Create Staff and Staff CRUD Staff CRUD, role
+4** 2** and Branch Branch tables, Module, Branch assignment, branch
+Management Models, Validation Assignment assignment, frontend
+Module** Modules, Services, Module, Backend synchronization, and all
+Controllers, MVC Module, tests should pass.
+Routes, Frontend Frontend Staff  
+ API integration, Integration  
+ Staff CRUD, Branch  
+ Assignment, Staff  
+ Role Assignment,  
+ Staff page  
+ integration, Unit  
+ Tests, API Tests,  
+ Integration Tests.
+
+**Week **Day **Integrate Validate Customer Fully Integrated Complete end-to-end
+5** 1** Complete Laundry → Order → Payment Customer, Order, workflow should function
+Business → Order Status Payment, Order successfully and pass
+Workflow** workflow, Staff → Status, and integration tests.
+Branch workflow, Staff Modules  
+ automatic customer  
+ registration,  
+ payment  
+ computation,  
+ payment status  
+ updates, order  
+ progression,  
+ inventory  
+ deduction, SMS  
+ notifications,  
+ Email  
+ notifications,  
+ realtime  
+ synchronization,  
+ search,  
+ pagination,  
+ resolve  
+ integration  
+ issues.
+
+**Week **Day **System Improve frontend Stable All backend and frontend
+5** 2** Stabilization and API integration, Application automated tests should
+Quality validation, error Build, Optimized pass with no broken
+Assurance** handling, loading Backend and workflows.
+states, realtime Frontend,  
+ synchronization, Passing Test  
+ refactor Suites  
+ backend/frontend  
+ code, optimize  
+ reusable  
+ components,  
+ execute Backend  
+ Unit Tests, API  
+ Tests, Integration  
+ Tests, Frontend  
+ Component Tests,  
+ Inter-component  
+ Tests, fix  
+ remaining issues.
+
+**Week **Day **Final System Execute complete Final Laundry Entire system should
+6** 1** Validation, Customer, Order, Management operate correctly,
+Refactoring, and Payment, Order System, backend/frontend remain
+Documentation** Status, Staff, and Technical synchronized, all
+Branch workflow Documentation, automated tests pass, and
+validation, run API project is ready for
+full Backend and Documentation, deployment and
+Frontend test Final Testing presentation.
+suites, API Tests, Report  
+ Integration Tests,  
+ Manual Acceptance  
+ Testing, refactor  
+ codebase, remove  
+ unused code,  
+ finalize README,  
+ API documentation,  
+ Technical  
+ Documentation,  
+ prepare final  
+ presentation,  
+ resolve remaining  
+ issues.
+
+---
 
 ---
 
 # Expected Final Deliverables
 
-## Frontend Modules
+## Frontend
 
 - Customer Management Module
 - Laundry Transaction Management Module
@@ -40,18 +198,14 @@ Responsible for developing customer, transaction, payment, order status, and bra
 - Staff Management Module
 - Branch Management Module
 
----
-
-## Backend Modules
+## Backend
 
 - Customer CRUD Module
 - Order CRUD Module
-- Payment Management Module
-- Order Status Management Module
+- Payment Module
+- Order Status Module
 - Staff CRUD Module
 - Branch Assignment Module
-
----
 
 ## Backend Architecture
 
@@ -61,25 +215,19 @@ Responsible for developing customer, transaction, payment, order status, and bra
 - Controllers
 - Routes
 
----
-
 ## Frontend Architecture
 
 - Pages
 - Reusable Components
 - API Service Layer
 
----
-
 ## Database
 
-- Customers Table
-- Orders Table
-- Payments Table
-- Staff Table
-- Branches Table
-
----
+- Customers
+- Orders
+- Payments
+- Staff
+- Branches
 
 ## Testing
 
@@ -91,8 +239,6 @@ Responsible for developing customer, transaction, payment, order status, and bra
 - Routing Tests
 - Manual Acceptance Testing
 - Final System Validation Report
-
----
 
 ## Documentation
 
@@ -106,4 +252,11 @@ Responsible for developing customer, transaction, payment, order status, and bra
 
 # Final Output
 
-A fully integrated Laundry Management System developed using React, Express.js, and Supabase following the Model–Service–Controller–Route architecture with a dedicated frontend API layer. The system includes Customer Management, Laundry Transaction Management, Payment Management, Order Status Tracking, Staff Management, and Branch Management modules, supported by comprehensive backend and frontend testing, complete documentation, synchronized database operations, and production-ready workflows.
+A fully integrated Laundry Management System developed using **React**,
+**Express.js**, and **Supabase**, following a
+**Model--Service--Controller--Route** backend architecture with a
+dedicated frontend API layer. The system includes Customer Management,
+Laundry Transaction Management, Payment Management, Order Status
+Tracking, Staff Management, and Branch Management modules with
+synchronized frontend and backend workflows, comprehensive automated
+testing, and complete technical documentation.
