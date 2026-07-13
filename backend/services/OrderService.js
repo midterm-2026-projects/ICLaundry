@@ -1,10 +1,6 @@
 // backend/services/OrderService.js
 
-import {
-  insertOrder,
-  getOrders,
-  updateOrder,
-} from "../models/OrderModel.js";
+import { insertOrder, getOrders, updateOrder } from "../models/OrderModel.js";
 import { RecentOrder } from "../models/OrderModel.js";
 
 // ==============================================
@@ -60,9 +56,7 @@ export const editOrder = (id, updatedFields) => {
   validateOrderId(id);
 
   // Find existing order
-  const existingOrder = getOrders().find(
-    (order) => order.id === Number(id)
-  );
+  const existingOrder = getOrders().find((order) => order.id === Number(id));
 
   if (!existingOrder) {
     throw new Error("Order not found");
@@ -118,10 +112,7 @@ export const getAnalytics = (period) => {
       "Dec",
     ];
   } else {
-    labels = Array.from(
-      { length: 5 },
-      (_, i) => String(currentYear - 4 + i)
-    );
+    labels = Array.from({ length: 5 }, (_, i) => String(currentYear - 4 + i));
   }
 
   const orders = Array(labels.length).fill(0);
@@ -261,10 +252,7 @@ const recentOrdersDB = [
 export const getPaginatedOrders = async (page = 1, limit = 10) => {
   const startIndex = (page - 1) * limit;
 
-  const paginatedData = recentOrdersDB.slice(
-    startIndex,
-    startIndex + limit
-  );
+  const paginatedData = recentOrdersDB.slice(startIndex, startIndex + limit);
 
   return {
     data: paginatedData,
@@ -277,9 +265,7 @@ export const getPaginatedOrders = async (page = 1, limit = 10) => {
 
 /** Get single recent order by ID */
 export const getOrderById = async (orderId) => {
-  return (
-    recentOrdersDB.find((order) => order.orderId === orderId) || null
-  );
+  return recentOrdersDB.find((order) => order.orderId === orderId) || null;
 };
 
 /** Create and add a new recent order */
