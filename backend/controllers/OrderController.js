@@ -1,4 +1,8 @@
-import { readOrders, editOrder } from "../services/OrderService.js";
+import {
+  readOrders,
+  editOrder,
+  updateOrderStatusService,
+} from "../services/OrderService.js";
 
 import { getOrderById } from "../models/OrderModel.js";
 
@@ -47,7 +51,8 @@ export const getOrderByIdController = async (req, res) => {
 };
 
 /**
- * Update Order Status
+ * Update Order
+ * General order update
  */
 export const updateOrderController = async (req, res) => {
   try {
@@ -56,6 +61,37 @@ export const updateOrderController = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: result,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+/**
+ * ==============================================
+ * ORDER STATUS MANAGEMENT
+ * Handles updating order progress.
+ * ==============================================
+ */
+
+/**
+ * Update Order Status
+ */
+export const updateOrderStatusController = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { status } = req.body;
+
+    const updatedOrder = await updateOrderStatusService(id, status);
+
+    return res.status(200).json({
+      success: true,
+      message: "Order status updated successfully.",
+      data: updatedOrder,
     });
   } catch (error) {
     return res.status(400).json({

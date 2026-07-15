@@ -4,9 +4,8 @@ import {
   getOrdersController,
   getOrderByIdController,
   updateOrderController,
+  updateOrderStatusController,
 } from "../controllers/OrderController.js";
-
-import { updateOrderStatusController } from "../controllers/OrderStatusController.js";
 
 const router = express.Router();
 
