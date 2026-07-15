@@ -1,51 +1,163 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("../../models/AnalyticsModel.js", () => ({
-  getTransactions: vi.fn(),
-  getPayments: vi.fn(),
-  getExpenses: vi.fn(),
+/**
+ * ==============================================
+ * MOCK MODELS
+ * ==============================================
+ */
+
+vi.mock("../../models/OrderModel.js", () => ({
+  getOrders: vi.fn(),
 }));
 
-import {
-  getTransactions,
-  getPayments,
-  getExpenses,
-} from "../../models/AnalyticsModel.js";
+vi.mock("../../models/PaymentModel.js", () => ({
+  getPayments: vi.fn(),
+}));
+
+import { getOrders } from "../../models/OrderModel.js";
+
+import { getPayments } from "../../models/PaymentModel.js";
 
 import { getDashboardAnalytics } from "../../services/AnalyticsService.js";
 
-describe("Analytics Service", () => {
+describe("Analytics Service Unit Test", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   /**
    * ==============================================
-   * DASHBOARD ANALYTICS GENERATION
+   * DASHBOARD GENERATION
    * ==============================================
    */
 
   describe("Generate Dashboard Analytics", () => {
-    it("should generate analytics for admin dashboard", async () => {
+    it("should calculate dashboard KPI values", async () => {
       /**
        * Real user scenario:
        *
-       * Admin opens dashboard.
-       * System calculates revenue,
-       * expenses, profit,
-       * and order statistics.
+       * Admin opens analytics dashboard.
+       *
+       * System calculates:
+       * - revenue
+       * - profit
+       * - orders
        */
 
-      getTransactions.mockResolvedValue([
+      getOrders.mockResolvedValue([
+        {
+          id: "order-1",
+          branch_id: "branch-1",
+          created_at: "2026-07-15",
+        },
+
+        {
+          id: "order-2",
+          branch_id: "branch-1",
+          created_at: "2026-07-15",
+        },
+      ]);
+
+      getPayments.mockResolvedValue([
+        {
+          id: "payment-1",
+          amount: 1000,
+          branch_id: "branch-1",
+          payment_date: "2026-07-15",
+        },
+
+        {
+          id: "payment-2",
+          amount: 500,
+          branch_id: "branch-1",
+          payment_date: "2026-07-15",
+        },
+      ]);
+
+      const result = await getDashboardAnalytics();
+
+      expect(result.totalRevenue).toBe(1500);
+
+      expect(result.totalExpenses).toBe(0);
+
+      expect(result.netProfit).toBe(1500);
+
+      expect(result.totalOrders).toBe(2);
+
+      expect(result.revenueDataset).toHaveLength(2);
+
+      expect(result.expenseDataset).toHaveLength(0);
+    });
+  });
+
+  /**
+   * ==============================================
+   * BRANCH FILTERING
+   * ==============================================
+   */
+
+  describe("Branch Analytics Filtering", () => {
+    it("should return analytics for selected branch", async () => {
+      /**
+       * Real user scenario:
+       *
+       * Owner selects
+       * Balayan branch.
+       */
+
+      getOrders.mockResolvedValue([
         {
           id: "1",
-          branch_id: "1",
-          created_at: "2026-07-14",
+          branch_id: "balayan",
         },
+
         {
           id: "2",
-          branch_id: "1",
-          created_at: "2026-07-14",
+          branch_id: "main",
+        },
+      ]);
+
+      getPayments.mockResolvedValue([
+        {
+          id: "1",
+          branch_id: "balayan",
+          amount: 3000,
+        },
+
+        {
+          id: "2",
+          branch_id: "main",
+          amount: 2000,
+        },
+      ]);
+
+      const result = await getDashboardAnalytics({
+        branchId: "balayan",
+      });
+
+      expect(result.totalOrders).toBe(1);
+
+      expect(result.totalRevenue).toBe(3000);
+    });
+  });
+
+  /**
+   * ==============================================
+   * DATE FILTERING
+   * ==============================================
+   */
+
+  describe("Date Range Analytics", () => {
+    it("should filter analytics using selected dates", async () => {
+      getOrders.mockResolvedValue([
+        {
+          id: "1",
+          created_at: "2026-07-01",
+        },
+
+        {
+          id: "2",
+          created_at: "2026-08-01",
         },
       ]);
 
@@ -53,99 +165,25 @@ describe("Analytics Service", () => {
         {
           id: "1",
           amount: 1000,
-          branch_id: "1",
-          payment_date: "2026-07-14",
+          payment_date: "2026-07-01",
         },
+
         {
           id: "2",
-          amount: 500,
-          branch_id: "1",
-          payment_date: "2026-07-14",
-        },
-      ]);
-
-      getExpenses.mockResolvedValue([
-        {
-          id: "1",
-          total_cost: 400,
-          branch_id: "1",
-          created_at: "2026-07-14",
-        },
-      ]);
-
-      const analytics = await getDashboardAnalytics();
-
-      expect(analytics.totalRevenue).toBe(1500);
-
-      expect(analytics.totalExpenses).toBe(400);
-
-      expect(analytics.netProfit).toBe(1100);
-
-      expect(analytics.totalOrders).toBe(2);
-
-      expect(analytics.revenueDataset).toHaveLength(2);
-
-      expect(analytics.expenseDataset).toHaveLength(1);
-    });
-  });
-
-  /**
-   * ==============================================
-   * MULTI BRANCH ANALYTICS
-   * ==============================================
-   */
-
-  describe("Multi Branch Analytics", () => {
-    it("should calculate analytics across multiple branches", async () => {
-      /**
-       * Real user scenario:
-       *
-       * Owner views overall business performance
-       * from different laundry branches.
-       */
-
-      getTransactions.mockResolvedValue([
-        {
-          id: "1",
-          branch_id: "main",
-        },
-        {
-          id: "2",
-          branch_id: "balayan",
-        },
-        {
-          id: "3",
-          branch_id: "nasugbu",
-        },
-      ]);
-
-      getPayments.mockResolvedValue([
-        {
           amount: 2000,
-          branch_id: "main",
-        },
-        {
-          amount: 3000,
-          branch_id: "balayan",
+          payment_date: "2026-08-01",
         },
       ]);
 
-      getExpenses.mockResolvedValue([
-        {
-          total_cost: 1000,
-          branch_id: "main",
-        },
-      ]);
+      const result = await getDashboardAnalytics({
+        startDate: "2026-07-01",
 
-      const analytics = await getDashboardAnalytics();
+        endDate: "2026-07-31",
+      });
 
-      expect(analytics.totalRevenue).toBe(5000);
+      expect(result.totalOrders).toBe(1);
 
-      expect(analytics.totalExpenses).toBe(1000);
-
-      expect(analytics.netProfit).toBe(4000);
-
-      expect(analytics.totalOrders).toBe(3);
+      expect(result.totalRevenue).toBe(1000);
     });
   });
 
@@ -156,32 +194,28 @@ describe("Analytics Service", () => {
    */
 
   describe("Empty Analytics Data", () => {
-    it("should return zero values when business has no records", async () => {
+    it("should return zero values when no business records exist", async () => {
       /**
        * Real user scenario:
        *
-       * New laundry branch has no transactions yet.
+       * New branch has no customers yet.
        */
 
-      getTransactions.mockResolvedValue([]);
+      getOrders.mockResolvedValue([]);
 
       getPayments.mockResolvedValue([]);
 
-      getExpenses.mockResolvedValue([]);
+      const result = await getDashboardAnalytics();
 
-      const analytics = await getDashboardAnalytics();
+      expect(result.totalRevenue).toBe(0);
 
-      expect(analytics.totalRevenue).toBe(0);
+      expect(result.totalExpenses).toBe(0);
 
-      expect(analytics.totalExpenses).toBe(0);
+      expect(result.netProfit).toBe(0);
 
-      expect(analytics.netProfit).toBe(0);
+      expect(result.totalOrders).toBe(0);
 
-      expect(analytics.totalOrders).toBe(0);
-
-      expect(analytics.revenueDataset).toHaveLength(0);
-
-      expect(analytics.expenseDataset).toHaveLength(0);
+      expect(result.revenueDataset).toHaveLength(0);
     });
   });
 
@@ -191,56 +225,22 @@ describe("Analytics Service", () => {
    * ==============================================
    */
 
-  describe("Analytics Service Error Handling", () => {
-    it("should throw error when transaction retrieval fails", async () => {
-      /**
-       * Real user scenario:
-       *
-       * Database transaction table is unavailable.
-       */
-
-      getTransactions.mockRejectedValue(
-        new Error("Transaction database error"),
-      );
+  describe("Analytics Error Handling", () => {
+    it("should throw error when orders cannot be retrieved", async () => {
+      getOrders.mockRejectedValue(new Error("Order database error"));
 
       await expect(getDashboardAnalytics()).rejects.toThrow(
-        "Transaction database error",
+        "Order database error",
       );
     });
 
-    it("should throw error when payment retrieval fails", async () => {
-      /**
-       * Real user scenario:
-       *
-       * Payment records cannot be loaded
-       * while generating dashboard analytics.
-       */
-
-      getTransactions.mockResolvedValue([]);
+    it("should throw error when payments cannot be retrieved", async () => {
+      getOrders.mockResolvedValue([]);
 
       getPayments.mockRejectedValue(new Error("Payment database error"));
 
       await expect(getDashboardAnalytics()).rejects.toThrow(
         "Payment database error",
-      );
-    });
-
-    it("should throw error when expense retrieval fails", async () => {
-      /**
-       * Real user scenario:
-       *
-       * Expense records cannot be loaded
-       * while calculating business profit.
-       */
-
-      getTransactions.mockResolvedValue([]);
-
-      getPayments.mockResolvedValue([]);
-
-      getExpenses.mockRejectedValue(new Error("Expense database error"));
-
-      await expect(getDashboardAnalytics()).rejects.toThrow(
-        "Expense database error",
       );
     });
   });

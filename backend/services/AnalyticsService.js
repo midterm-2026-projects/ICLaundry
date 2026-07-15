@@ -1,20 +1,18 @@
 // backend/services/AnalyticsService.js
 
-import {
-  getTransactions,
-  getPayments,
-  getExpenses,
-} from "../models/AnalyticsModel.js";
+import { getOrders } from "../models/OrderModel.js";
+
+import { getPayments } from "../models/PaymentModel.js";
 
 /**
  * ==============================================
  * ANALYTICS SERVICE
- * Handles all dashboard business logic.
+ * Handles dashboard business logic.
  * ==============================================
  */
 
 /**
- * Filter records by date range.
+ * Filter records by date range
  */
 const filterByDateRange = (
   records,
@@ -42,7 +40,7 @@ const filterByDateRange = (
 };
 
 /**
- * Filter records by branch.
+ * Filter by branch
  */
 const filterByBranch = (records, branchId) => {
   if (!branchId) {
@@ -58,43 +56,29 @@ const filterByBranch = (records, branchId) => {
  * ==============================================
  */
 
-/**
- * Calculate Total Revenue.
- */
 const calculateRevenue = (payments) => {
   return payments.reduce(
     (total, payment) => total + Number(payment.amount || 0),
+
     0,
   );
 };
 
-/**
- * Calculate Total Expenses.
- *
- * Supports:
- * - total_cost (future Expense module)
- * - amount (temporary Payments source)
- */
 const calculateExpenses = (expenses) => {
   return expenses.reduce(
     (total, expense) =>
       total + Number(expense.total_cost ?? expense.amount ?? 0),
+
     0,
   );
 };
 
-/**
- * Calculate Net Profit.
- */
 const calculateNetProfit = (revenue, expenses) => {
   return revenue - expenses;
 };
 
-/**
- * Calculate Total Orders.
- */
-const calculateTotalOrders = (transactions) => {
-  return transactions.length;
+const calculateTotalOrders = (orders) => {
+  return orders.length;
 };
 
 /**
@@ -103,28 +87,22 @@ const calculateTotalOrders = (transactions) => {
  * ==============================================
  */
 
-/**
- * Revenue Dataset.
- */
 const generateRevenueDataset = (payments) => {
   return payments.map((payment) => ({
     id: payment.id,
+
     label: payment.payment_date ?? payment.created_at,
+
     value: Number(payment.amount || 0),
   }));
 };
 
-/**
- * Expense Dataset.
- *
- * Supports:
- * - total_cost (future Expense module)
- * - amount (temporary Payments source)
- */
 const generateExpenseDataset = (expenses) => {
   return expenses.map((expense) => ({
     id: expense.id,
+
     label: expense.created_at ?? expense.payment_date,
+
     value: Number(expense.total_cost ?? expense.amount ?? 0),
   }));
 };
@@ -140,46 +118,34 @@ export const getDashboardAnalytics = async ({
   endDate = "",
   branchId = "",
 } = {}) => {
-  let transactions = await getTransactions();
+  let orders = await getOrders();
 
   let payments = await getPayments();
 
-  let expenses = await getExpenses();
+  /**
+   * Expenses are currently unavailable.
+   * Future expense module can be connected here.
+   */
+  let expenses = [];
 
   /**
-   * Apply date filters.
+   * Date filtering
    */
 
-  transactions = filterByDateRange(
-    transactions,
-    startDate,
-    endDate,
-    "created_at",
-  );
+  orders = filterByDateRange(orders, startDate, endDate, "created_at");
 
   payments = filterByDateRange(payments, startDate, endDate, "payment_date");
 
-  expenses = filterByDateRange(
-    expenses,
-    startDate,
-    endDate,
-    expenses.length > 0 && "payment_date" in expenses[0]
-      ? "payment_date"
-      : "created_at",
-  );
-
   /**
-   * Apply branch filters.
+   * Branch filtering
    */
 
-  transactions = filterByBranch(transactions, branchId);
+  orders = filterByBranch(orders, branchId);
 
   payments = filterByBranch(payments, branchId);
 
-  expenses = filterByBranch(expenses, branchId);
-
   /**
-   * Calculate KPIs.
+   * Calculate dashboard values
    */
 
   const totalRevenue = calculateRevenue(payments);
@@ -188,16 +154,15 @@ export const getDashboardAnalytics = async ({
 
   const netProfit = calculateNetProfit(totalRevenue, totalExpenses);
 
-  const totalOrders = calculateTotalOrders(transactions);
-
-  /**
-   * Return analytics.
-   */
+  const totalOrders = calculateTotalOrders(orders);
 
   return {
     totalRevenue,
+
     totalExpenses,
+
     netProfit,
+
     totalOrders,
 
     revenueDataset: generateRevenueDataset(payments),
