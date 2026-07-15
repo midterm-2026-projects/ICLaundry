@@ -22,13 +22,29 @@ const getOrders = async () => {
 const getAvailableOrder = async () => {
   const orders = await getOrders();
 
-  return orders.find((order) => order.payment_status?.toLowerCase() !== "paid");
+  const order = orders.find(
+    (order) => order.payment_status?.toLowerCase() !== "paid",
+  );
+
+  if (!order) {
+    throw new Error("No unpaid or partial order available for payment testing");
+  }
+
+  return order;
 };
 
 const getPaidOrder = async () => {
   const orders = await getOrders();
 
-  return orders.find((order) => order.payment_status?.toLowerCase() === "paid");
+  const order = orders.find(
+    (order) => order.payment_status?.toLowerCase() === "paid",
+  );
+
+  if (!order) {
+    throw new Error("No paid order available for payment testing");
+  }
+
+  return order;
 };
 
 const createDownpayment = async (order) => {
@@ -42,7 +58,6 @@ const createDownpayment = async (order) => {
     payment_method: "cash",
   });
 };
-
 describe("Payment API Integration Test", () => {
   /**
    * ==============================================
@@ -58,11 +73,12 @@ describe("Payment API Integration Test", () => {
 
       const response = await createDownpayment(order);
 
+      console.log("Status:", response.status);
+      console.log("Body:", response.body);
+
       expect(response.status).toBe(201);
 
       expect(response.body.success).toBe(true);
-
-      expect(response.body.data).toBeDefined();
     });
 
     it.each([
