@@ -76,6 +76,8 @@ describe("Branch Model Integration Test", () => {
       const result = await getBranches();
 
       expect(Array.isArray(result)).toBe(true);
+
+      expect(result).toHaveLength(result.length);
     });
 
     it("should return branch information needed by dashboard", async () => {
