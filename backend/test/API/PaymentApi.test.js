@@ -1,7 +1,53 @@
+// backend/test/API/PaymentApi.test.js
+
 import { describe, it, expect } from "vitest";
 import request from "supertest";
 
 import app from "../../app.js";
+
+/**
+ * ==============================================
+ * TEST HELPERS
+ * ==============================================
+ */
+
+const getOrders = async () => {
+  const response = await request(app).get("/api/orders");
+
+  expect(response.status).toBe(200);
+
+  return response.body.data;
+};
+
+const getUnpaidOrder = async () => {
+  const orders = await getOrders();
+
+  return orders.find(
+    (order) => order.payment_status?.toLowerCase() === "unpaid",
+  );
+};
+
+const getPartialOrder = async () => {
+  const orders = await getOrders();
+
+  return orders.find(
+    (order) => order.payment_status?.toLowerCase() === "partial",
+  );
+};
+
+const getUnpaidOrPartialOrder = async () => {
+  const orders = await getOrders();
+
+  return orders.find((order) =>
+    ["unpaid", "partial"].includes(order.payment_status?.toLowerCase()),
+  );
+};
+
+const getPaidOrder = async () => {
+  const orders = await getOrders();
+
+  return orders.find((order) => order.payment_status?.toLowerCase() === "paid");
+};
 
 describe("Payment API Integration Test", () => {
   /**
@@ -12,17 +58,17 @@ describe("Payment API Integration Test", () => {
 
   describe("POST /api/payments/initial", () => {
     it("should allow customer to create initial downpayment", async () => {
-      const ordersResponse = await request(app).get("/api/orders");
+      const order = await getUnpaidOrder();
 
-      expect(ordersResponse.status).toBe(200);
-
-      const order = ordersResponse.body.data[0];
+      expect(order).toBeDefined();
 
       const minimumDownpayment = Number(order.total_price) * 0.5;
 
       const response = await request(app).post("/api/payments/initial").send({
         order_id: order.id,
+
         amount: minimumDownpayment,
+
         payment_method: "cash",
       });
 
@@ -64,7 +110,9 @@ describe("Payment API Integration Test", () => {
     it("should reject payment for non-existing order", async () => {
       const response = await request(app).post("/api/payments/initial").send({
         order_id: "999999",
+
         amount: 500,
+
         payment_method: "cash",
       });
 
@@ -76,13 +124,15 @@ describe("Payment API Integration Test", () => {
     it.each([0, -100, -1])(
       "should reject invalid payment amount %s",
       async (amount) => {
-        const ordersResponse = await request(app).get("/api/orders");
+        const order = await getUnpaidOrder();
 
-        const order = ordersResponse.body.data[0];
+        expect(order).toBeDefined();
 
         const response = await request(app).post("/api/payments/initial").send({
           order_id: order.id,
+
           amount,
+
           payment_method: "cash",
         });
 
@@ -93,15 +143,17 @@ describe("Payment API Integration Test", () => {
     );
 
     it("should prevent customer from paying below required downpayment", async () => {
-      const ordersResponse = await request(app).get("/api/orders");
+      const order = await getUnpaidOrder();
 
-      const order = ordersResponse.body.data[0];
+      expect(order).toBeDefined();
 
       const response = await request(app)
         .post("/api/payments/initial")
         .send({
           order_id: order.id,
+
           amount: Number(order.total_price) * 0.1,
+
           payment_method: "cash",
         });
 
@@ -119,22 +171,33 @@ describe("Payment API Integration Test", () => {
 
   describe("POST /api/payments/complete", () => {
     it("should allow customer to complete remaining payment", async () => {
-      const ordersResponse = await request(app).get("/api/orders");
+      const order = await getUnpaidOrder();
 
-      const order = ordersResponse.body.data[0];
+      expect(order).toBeDefined();
 
-      const remainingBalance =
-        Number(order.total_price) - Number(order.amount_paid);
+      const downpayment = Number(order.total_price) * 0.5;
 
-      const response = await request(app).post("/api/payments/complete").send({
+      await request(app).post("/api/payments/initial").send({
         order_id: order.id,
-        amount: remainingBalance,
+
+        amount: downpayment,
+
         payment_method: "cash",
       });
 
-      if (response.status !== 200) {
-        console.log(response.body);
-      }
+      const updatedOrder = await request(app).get(`/api/orders/${order.id}`);
+
+      const remainingBalance =
+        Number(updatedOrder.body.data.total_price) -
+        Number(updatedOrder.body.data.amount_paid);
+
+      const response = await request(app).post("/api/payments/complete").send({
+        order_id: order.id,
+
+        amount: remainingBalance,
+
+        payment_method: "cash",
+      });
 
       expect(response.status).toBe(200);
 
@@ -146,6 +209,7 @@ describe("Payment API Integration Test", () => {
     it("should reject completing payment without order id", async () => {
       const response = await request(app).post("/api/payments/complete").send({
         amount: 500,
+
         payment_method: "cash",
       });
 
@@ -155,13 +219,15 @@ describe("Payment API Integration Test", () => {
     });
 
     it("should reject completing payment with invalid amount", async () => {
-      const ordersResponse = await request(app).get("/api/orders");
+      const order = await getUnpaidOrPartialOrder();
 
-      const order = ordersResponse.body.data[0];
+      expect(order).toBeDefined();
 
       const response = await request(app).post("/api/payments/complete").send({
         order_id: order.id,
+
         amount: -500,
+
         payment_method: "cash",
       });
 
@@ -171,15 +237,17 @@ describe("Payment API Integration Test", () => {
     });
 
     it("should prevent customer from overpaying order", async () => {
-      const ordersResponse = await request(app).get("/api/orders");
+      const order = await getUnpaidOrPartialOrder();
 
-      const order = ordersResponse.body.data[0];
+      expect(order).toBeDefined();
 
       const response = await request(app)
         .post("/api/payments/complete")
         .send({
           order_id: order.id,
+
           amount: Number(order.total_price) + 1000,
+
           payment_method: "cash",
         });
 
@@ -189,18 +257,15 @@ describe("Payment API Integration Test", () => {
     });
 
     it("should prevent paying an already completed order", async () => {
-      const ordersResponse = await request(app).get("/api/orders");
+      const paidOrder = await getPaidOrder();
 
-      const paidOrder = ordersResponse.body.data.find(
-        (order) =>
-          order.payment_status && order.payment_status.toLowerCase() === "paid",
-      );
-
-      if (!paidOrder) return;
+      expect(paidOrder).toBeDefined();
 
       const response = await request(app).post("/api/payments/complete").send({
         order_id: paidOrder.id,
+
         amount: 500,
+
         payment_method: "cash",
       });
 
@@ -220,13 +285,15 @@ describe("Payment API Integration Test", () => {
     it.each(["", null, "invalid_method"])(
       "should reject invalid payment method %s",
       async (payment_method) => {
-        const ordersResponse = await request(app).get("/api/orders");
+        const order = await getUnpaidOrder();
 
-        const order = ordersResponse.body.data[0];
+        expect(order).toBeDefined();
 
         const response = await request(app).post("/api/payments/initial").send({
           order_id: order.id,
+
           amount: 500,
+
           payment_method,
         });
 
