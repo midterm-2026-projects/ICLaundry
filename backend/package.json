@@ -1,12 +1,20 @@
 {
   "devDependencies": {
+    "supertest": "^7.2.2",
     "vitest": "^4.1.10"
   },
- "scripts": {
+  "scripts": {
     "test": "vitest",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.110.2",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
   }
 }

@@ -1,85 +1,191 @@
 // backend/models/OrderModel.js
 
-// ==============================================
-// IN-MEMORY STORAGE & HELPERS (for unit testing)
-// ==============================================
-let orders = [];
+import { supabase } from "../config/db.js";
 
 /**
- * Create a new order in in-memory storage
- * @param {object} order - Order data to insert
- * @returns {object} Newly created order with auto-generated ID
+ * ==============================================
+ * ORDER MODEL
+ * Handles all database operations for orders.
+ * ==============================================
  */
-export const insertOrder = (order) => {
-  const newOrder = {
-    id: orders.length + 1,
-    ...order,
+
+/**
+ * Get all orders
+ */
+export const getOrders = async () => {
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+
+  return data;
+};
+
+/**
+ * Get order by ID
+ */
+export const getOrderById = async (id) => {
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) throw new Error(error.message);
+
+  return data;
+};
+
+/**
+ * Get order by Order Number
+ */
+export const getOrderByNumber = async (orderNumber) => {
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*")
+    .eq("order_number", orderNumber)
+    .single();
+
+  if (error) throw new Error(error.message);
+
+  return data;
+};
+
+/**
+ * Get orders by status
+ */
+export const getOrdersByStatus = async (status) => {
+  const { data, error } = await supabase
+    .from("orders")
+    .select("*")
+    .eq("status", status)
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+
+  return data;
+};
+
+/**
+ * Create a new order
+ */
+export const createOrder = async (orderData) => {
+  const { data, error } = await supabase
+    .from("orders")
+    .insert(orderData)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+
+  return data;
+};
+
+/**
+ * Update an order
+ */
+export const updateOrder = async (id, updates) => {
+  const { data, error } = await supabase
+    .from("orders")
+    .update(updates)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+
+  return data;
+};
+
+/**
+ * Update only the order status
+ */
+export const updateOrderStatus = async (id, status) => {
+  return updateOrder(id, { status });
+};
+
+/**
+ * Update payment information of an order
+ */
+export const updateOrderPayment = async (
+  id,
+  amountPaid,
+  paymentStatus,
+  paymentMethod = null,
+) => {
+  const updates = {
+    amount_paid: amountPaid,
+    payment_status: paymentStatus,
   };
-  orders.push(newOrder);
-  return newOrder;
+
+  if (paymentMethod) {
+    updates.payment_method = paymentMethod;
+  }
+
+  return updateOrder(id, updates);
 };
 
 /**
- * Get all orders from in-memory storage
- * @returns {Array} List of all orders
+ * Delete an order
  */
-export const getOrders = () => {
-  return orders;
+export const deleteOrder = async (id) => {
+  const { error } = await supabase.from("orders").delete().eq("id", id);
+
+  if (error) throw new Error(error.message);
+
+  return true;
 };
 
 /**
- * Update an existing order by numeric ID
- * @param {number|string} id - ID of order to update
- * @param {object} updatedOrder - Fields to update
- * @returns {object|null} Updated order, or null if not found
+ * ==============================================
+ * RECENT ORDER MODEL
+ * Used by the Recent Orders module.
+ * ==============================================
  */
-export const updateOrder = (id, updatedOrder) => {
-  const orderIndex = orders.findIndex(
-    (order) => order.id === Number(id)
-  );
-  if (orderIndex === -1) return null;
-  orders[orderIndex] = { ...orders[orderIndex], ...updatedOrder };
-  return orders[orderIndex];
-};
-
-/**
- * Reset or seed in-memory storage (for test setup/teardown)
- * @param {Array} newOrders - Optional initial orders to set
- */
-export const resetOrders = (newOrders = []) => {
-  orders = [...newOrders];
-};
-
-// ==============================================
-// RECENT ORDER DATA MODEL
-// Matches exactly the columns in your frontend table
-// ==============================================
 export class RecentOrder {
   constructor(data) {
-    this.orderId = data.orderId;       // ORDER #
-    this.customer = data.customer;     // CUSTOMER
-    this.status = data.status;         // STATUS: Pending / Folding / Ready / Released
-    this.waitingTime = data.waitingTime || null; // TIME LEFT
-    this.amount = data.amount;         // AMOUNT
+    this.orderId = data.orderId;
+    this.customer = data.customer;
+    this.status = data.status;
+    this.waitingTime = data.waitingTime || null;
+    this.amount = data.amount;
     this.createdAt = data.createdAt || new Date();
   }
 
   /**
-   * Validate required fields and allowed status values
-   * @returns {boolean} True if valid
-   * @throws {Error} If any field is invalid or missing
+   * Validate required fields
    */
   validate() {
-    const validStatuses = ["Pending", "Folding", "Ready", "Released"];
-    
-    if (!this.orderId) throw new Error("Order ID is required");
-    if (!this.customer) throw new Error("Customer name is required");
-    if (!validStatuses.includes(this.status)) throw new Error(`Status must be one of: ${validStatuses.join(", ")}`);
-    if (!this.amount) throw new Error("Order amount is required");
-    
+    const validStatuses = [
+      "Pending",
+      "Washing",
+      "Drying",
+      "Folding",
+      "Ready",
+      "Released",
+      "Cancelled",
+    ];
+
+    if (!this.orderId) {
+      throw new Error("Order ID is required");
+    }
+
+    if (!this.customer) {
+      throw new Error("Customer name is required");
+    }
+
+    if (!validStatuses.includes(this.status)) {
+      throw new Error(`Status must be one of: ${validStatuses.join(", ")}`);
+    }
+
+    if (!this.amount) {
+      throw new Error("Order amount is required");
+    }
+
     return true;
   }
 }
 
-// Default export for backward compatibility
 export default RecentOrder;

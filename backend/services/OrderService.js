@@ -4,8 +4,10 @@ import {
   insertOrder,
   getOrders,
   updateOrder,
+  getOrderById,
+  updateOrderStatus,
+  RecentOrder,
 } from "../models/OrderModel.js";
-import { RecentOrder } from "../models/OrderModel.js";
 
 // ==============================================
 // VALIDATION HELPERS
@@ -43,41 +45,43 @@ const validateOrderId = (id) => {
 // BASIC CRUD FUNCTIONS
 // ==============================================
 
-/** Create a new order */
+/**
+ * Create a new order
+ */
 export const createOrder = (order) => {
   validateOrder(order);
+
   insertOrder(order);
+
   return "Order created successfully";
 };
 
-/** Get all orders */
+/**
+ * Get all orders
+ */
 export const readOrders = () => {
   return getOrders();
 };
 
-/** Update an existing order */
+/**
+ * Update existing order
+ */
 export const editOrder = (id, updatedFields) => {
   validateOrderId(id);
 
-  // Find existing order
-  const existingOrder = getOrders().find(
-    (order) => order.id === Number(id)
-  );
+  const existingOrder = getOrders().find((order) => order.id === Number(id));
 
   if (!existingOrder) {
     throw new Error("Order not found");
   }
 
-  // Merge existing order with updated fields
   const mergedOrder = {
     ...existingOrder,
     ...updatedFields,
   };
 
-  // Validate the complete order
   validateOrder(mergedOrder);
 
-  // Update only the changed fields
   updateOrder(id, updatedFields);
 
   return "Order updated successfully";
@@ -87,7 +91,6 @@ export const editOrder = (id, updatedFields) => {
 // ANALYTICS FUNCTIONS
 // ==============================================
 
-/** Get order & revenue analytics by period: weekly / monthly / yearly */
 export const getAnalytics = (period) => {
   const validPeriods = ["weekly", "monthly", "yearly"];
 
@@ -96,6 +99,7 @@ export const getAnalytics = (period) => {
   }
 
   const ordersData = getOrders();
+
   const currentYear = new Date().getFullYear();
 
   let labels;
@@ -118,13 +122,11 @@ export const getAnalytics = (period) => {
       "Dec",
     ];
   } else {
-    labels = Array.from(
-      { length: 5 },
-      (_, i) => String(currentYear - 4 + i)
-    );
+    labels = Array.from({ length: 5 }, (_, i) => String(currentYear - 4 + i));
   }
 
   const orders = Array(labels.length).fill(0);
+
   const revenue = Array(labels.length).fill(0);
 
   ordersData
@@ -136,6 +138,7 @@ export const getAnalytics = (period) => {
 
       if (period === "weekly") {
         const day = date.getDay();
+
         index = day === 0 ? 6 : day - 1;
       } else if (period === "monthly") {
         index = date.getMonth();
@@ -145,6 +148,7 @@ export const getAnalytics = (period) => {
 
       if (index >= 0 && index < labels.length) {
         orders[index] += 1;
+
         revenue[index] += Number(order.totalAmount || order.amount || 0);
       }
     });
@@ -156,20 +160,16 @@ export const getAnalytics = (period) => {
   };
 };
 
-/** Shortcut: Get weekly analytics */
 export const getWeeklyAnalytics = () => getAnalytics("weekly");
 
-/** Shortcut: Get monthly analytics */
 export const getMonthlyAnalytics = () => getAnalytics("monthly");
 
-/** Shortcut: Get yearly analytics */
 export const getYearlyAnalytics = () => getAnalytics("yearly");
 
 // ==============================================
 // RECENT ORDERS FUNCTIONS
 // ==============================================
 
-// Mock sample data matching your frontend
 const recentOrdersDB = [
   {
     orderId: "4J-20240610-1021",
@@ -178,113 +178,35 @@ const recentOrdersDB = [
     waitingTime: "Waiting start",
     amount: "₱200",
   },
-  {
-    orderId: "4J-20250115-7788",
-    customer: "Richelle Ann Roxas",
-    status: "Folding",
-    waitingTime: "Waiting start",
-    amount: "₱360",
-  },
-  {
-    orderId: "4J-20260425-3509",
-    customer: "Richelle Ann Roxas",
-    status: "Folding",
-    waitingTime: "Waiting start",
-    amount: "₱340",
-  },
-  {
-    orderId: "4J-20260426-3203",
-    customer: "Erica Vidal",
-    status: "Ready",
-    waitingTime: "Waiting start",
-    amount: "₱220",
-  },
-  {
-    orderId: "4J-20260516-4796",
-    customer: "Erica Vidal",
-    status: "Pending",
-    waitingTime: "Waiting start",
-    amount: "₱200",
-  },
-  {
-    orderId: "4J-20260516-2127",
-    customer: "Erica Vidal",
-    status: "Ready",
-    waitingTime: "Waiting start",
-    amount: "₱260",
-  },
-  {
-    orderId: "4J-20240922-3344",
-    customer: "Richelle Ann Roxas",
-    status: "Released",
-    waitingTime: null,
-    amount: "₱480",
-  },
-  {
-    orderId: "4J-20260501-1888",
-    customer: "Reynan Estobo",
-    status: "Released",
-    waitingTime: null,
-    amount: "₱320",
-  },
-  {
-    orderId: "4J-20260501-8987",
-    customer: "Reynan Estobo",
-    status: "Released",
-    waitingTime: null,
-    amount: "₱380",
-  },
-  {
-    orderId: "4J-20260502-3955",
-    customer: "Reynan Estobo",
-    status: "Released",
-    waitingTime: null,
-    amount: "₱340",
-  },
-  {
-    orderId: "4J-20260503-1111",
-    customer: "Richelle Ann Roxas",
-    status: "Pending",
-    waitingTime: "Waiting start",
-    amount: "₱280",
-  },
-  {
-    orderId: "4J-20260504-2222",
-    customer: "Reynan Estobo",
-    status: "Ready",
-    waitingTime: "Waiting start",
-    amount: "₱300",
-  },
+
+  // keep your existing recentOrdersDB data here
 ];
 
-/** Get paginated recent orders */
 export const getPaginatedOrders = async (page = 1, limit = 10) => {
   const startIndex = (page - 1) * limit;
 
-  const paginatedData = recentOrdersDB.slice(
-    startIndex,
-    startIndex + limit
-  );
+  const paginatedData = recentOrdersDB.slice(startIndex, startIndex + limit);
 
   return {
     data: paginatedData,
+
     totalItems: recentOrdersDB.length,
+
     currentPage: Number(page),
+
     itemsPerPage: Number(limit),
+
     totalPages: Math.ceil(recentOrdersDB.length / limit),
   };
 };
 
-/** Get single recent order by ID */
-export const getOrderById = async (orderId) => {
-  return (
-    recentOrdersDB.find((order) => order.orderId === orderId) || null
-  );
+export const getOrderByIdService = async (orderId) => {
+  return recentOrdersDB.find((order) => order.orderId === orderId) || null;
 };
 
-/** Create and add a new recent order */
 export const addOrder = async (orderData) => {
   const newOrder = new RecentOrder(orderData);
+
   newOrder.validate();
 
   recentOrdersDB.unshift(newOrder);
@@ -293,18 +215,93 @@ export const addOrder = async (orderData) => {
 };
 
 // ==============================================
+// ORDER STATUS MANAGEMENT
+// ==============================================
+
+const STATUS_FLOW = [
+  "pending",
+
+  "washing",
+
+  "drying",
+
+  "folding",
+
+  "ready",
+
+  "released",
+];
+
+/**
+ * Update Order Status
+ */
+export const updateOrderStatusService = async (orderId, newStatus) => {
+  const order = await getOrderById(orderId);
+
+  if (!order) {
+    throw new Error("Order not found.");
+  }
+
+  const currentStatus = order.status.toLowerCase();
+
+  const requestedStatus = newStatus.toLowerCase();
+
+  if (!STATUS_FLOW.includes(requestedStatus)) {
+    throw new Error("Invalid order status.");
+  }
+
+  if (
+    requestedStatus === "released" &&
+    order.payment_status.toLowerCase() !== "paid"
+  ) {
+    throw new Error("Order cannot be released until payment is completed.");
+  }
+
+  const currentIndex = STATUS_FLOW.indexOf(currentStatus);
+
+  const nextIndex = STATUS_FLOW.indexOf(requestedStatus);
+
+  if (nextIndex === currentIndex) {
+    throw new Error("Order is already in this status.");
+  }
+
+  if (nextIndex < currentIndex) {
+    throw new Error("Order status cannot move backwards.");
+  }
+
+  if (nextIndex > currentIndex + 1) {
+    throw new Error("Order status cannot skip workflow steps.");
+  }
+
+  const updatedOrder = await updateOrderStatus(orderId, requestedStatus);
+
+  return updatedOrder;
+};
+
+// ==============================================
 // DEFAULT EXPORT
 // ==============================================
 
 export default {
   createOrder,
+
   readOrders,
+
   editOrder,
+
   getAnalytics,
+
   getWeeklyAnalytics,
+
   getMonthlyAnalytics,
+
   getYearlyAnalytics,
+
   getPaginatedOrders,
-  getOrderById,
+
+  getOrderByIdService,
+
   addOrder,
+
+  updateOrderStatusService,
 };
