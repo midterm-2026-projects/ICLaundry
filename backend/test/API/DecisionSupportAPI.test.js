@@ -1,35 +1,88 @@
-import { describe, it, expect } from "vitest";
+// test/API/DecisionSupportAPI.test.js
+
+import { describe, it, expect, vi } from "vitest";
+
 import request from "supertest";
 
-import app from "../../app.js";
+vi.mock("../../models/OrderModel.js", () => ({
+  getOrders: vi.fn().mockResolvedValue([
+    {
+      id: 1,
+      total_amount: 500,
+      created_at: "2026-05-10",
+    },
+    {
+      id: 2,
+      total_amount: 700,
+      created_at: "2026-06-10",
+    },
+  ]),
+}));
+
+vi.mock("../../models/PaymentModel.js", () => ({
+  getPayments: vi.fn().mockResolvedValue([
+    {
+      id: 1,
+      amount: 500,
+      payment_date: "2026-05-10",
+    },
+    {
+      id: 2,
+      amount: 700,
+      payment_date: "2026-06-10",
+    },
+  ]),
+}));
+
+vi.mock("../../models/InventoryModel.js", () => ({
+  getInventoryItems: vi.fn().mockResolvedValue([
+    {
+      id: 1,
+      name: "Laundry Detergent",
+      current_stock: 50,
+      minimum_stock: 10,
+    },
+    {
+      id: 2,
+      name: "Fabric Conditioner",
+      current_stock: 20,
+      minimum_stock: 8,
+    },
+  ]),
+
+  getInventoryUsageLogs: vi.fn().mockResolvedValue([
+    {
+      id: 1,
+      item_id: 1,
+      quantity_used: 10,
+    },
+    {
+      id: 2,
+      item_id: 2,
+      quantity_used: 5,
+    },
+  ]),
+
+  getInventoryRestocks: vi.fn().mockResolvedValue([
+    {
+      id: 1,
+      item_id: 1,
+      quantity_added: 5,
+    },
+    {
+      id: 2,
+      item_id: 2,
+      quantity_added: 3,
+    },
+  ]),
+}));
+
+const { default: app } = await import("../../app.js");
 
 describe("Decision Support API Integration Test", () => {
-  /**
-   * ==============================================
-   * DECISION SUPPORT DASHBOARD
-   * ==============================================
-   */
-
   describe("GET /api/decision-support", () => {
     it("should allow admin to load the Decision Support dashboard", async () => {
-      /**
-       * Real user scenario:
-       *
-       * Business owner opens
-       * the Decision Support page.
-       *
-       * System loads:
-       * - revenue forecast
-       * - inventory forecast
-       * - recommendations
-       * - alerts
-       */
-
-      // Act
-
       const response = await request(app).get("/api/decision-support");
-
-      // Assert
 
       expect(response.status).toBe(200);
 
@@ -55,21 +108,8 @@ describe("Decision Support API Integration Test", () => {
     });
   });
 
-  /**
-   * ==============================================
-   * REVENUE FORECAST
-   * ==============================================
-   */
-
   describe("Revenue Forecast", () => {
     it("should return revenue forecast dataset", async () => {
-      /**
-       * Real user scenario:
-       *
-       * Forecast chart loads
-       * next month's revenue.
-       */
-
       const response = await request(app).get("/api/decision-support");
 
       expect(response.status).toBe(200);
@@ -95,24 +135,13 @@ describe("Decision Support API Integration Test", () => {
       );
 
       expect(Array.isArray(historical)).toBe(true);
+
+      expect(historical.length).toBeGreaterThan(0);
     });
   });
 
-  /**
-   * ==============================================
-   * INVENTORY FORECAST
-   * ==============================================
-   */
-
   describe("Inventory Forecast", () => {
     it("should return inventory forecast dataset", async () => {
-      /**
-       * Real user scenario:
-       *
-       * Inventory Forecast
-       * widget loads.
-       */
-
       const response = await request(app).get("/api/decision-support");
 
       expect(response.status).toBe(200);
@@ -129,21 +158,8 @@ describe("Decision Support API Integration Test", () => {
     });
   });
 
-  /**
-   * ==============================================
-   * REVENUE TREND
-   * ==============================================
-   */
-
   describe("Revenue Trend", () => {
     it("should return revenue trend analysis", async () => {
-      /**
-       * Real user scenario:
-       *
-       * Owner reviews
-       * monthly business growth.
-       */
-
       const response = await request(app).get("/api/decision-support");
 
       expect(response.status).toBe(200);
@@ -171,21 +187,8 @@ describe("Decision Support API Integration Test", () => {
     });
   });
 
-  /**
-   * ==============================================
-   * INVENTORY TREND
-   * ==============================================
-   */
-
   describe("Inventory Trend", () => {
     it("should return inventory trend analysis", async () => {
-      /**
-       * Real user scenario:
-       *
-       * Manager checks
-       * inventory health.
-       */
-
       const response = await request(app).get("/api/decision-support");
 
       expect(response.status).toBe(200);
@@ -204,23 +207,8 @@ describe("Decision Support API Integration Test", () => {
     });
   });
 
-  /**
-   * ==============================================
-   * DSS RECOMMENDATIONS
-   * ==============================================
-   */
-
   describe("Decision Support Recommendations", () => {
     it("should generate business recommendations", async () => {
-      /**
-       * Real user scenario:
-       *
-       * Owner opens DSS.
-       *
-       * Recommendations
-       * are displayed.
-       */
-
       const response = await request(app).get("/api/decision-support");
 
       expect(response.status).toBe(200);
@@ -247,25 +235,25 @@ describe("Decision Support API Integration Test", () => {
 
       expect(response.status).toBe(200);
 
-      expect(Array.isArray(response.body.data.recommendations)).toBe(true);
+      const recommendations = response.body.data.recommendations;
+
+      const priorityOrder = {
+        Critical: 1,
+        High: 2,
+        Medium: 3,
+        Low: 4,
+      };
+
+      for (let index = 1; index < recommendations.length; index += 1) {
+        expect(
+          priorityOrder[recommendations[index - 1].priority],
+        ).toBeLessThanOrEqual(priorityOrder[recommendations[index].priority]);
+      }
     });
   });
 
-  /**
-   * ==============================================
-   * DSS ALERTS
-   * ==============================================
-   */
-
   describe("Decision Support Alerts", () => {
     it("should generate dashboard alerts", async () => {
-      /**
-       * Real user scenario:
-       *
-       * Dashboard displays
-       * important business alerts.
-       */
-
       const response = await request(app).get("/api/decision-support");
 
       expect(response.status).toBe(200);
@@ -288,49 +276,31 @@ describe("Decision Support API Integration Test", () => {
     });
   });
 
-  /**
-   * ==============================================
-   * RESPONSE VALIDATION
-   * ==============================================
-   */
-
   describe("Decision Support Response Structure", () => {
     it("should return the complete Decision Support dashboard structure", async () => {
-      /**
-       * Real user scenario:
-       *
-       * Frontend loads the
-       * entire Decision Support page.
-       *
-       * All required sections
-       * should be available.
-       */
-
-      // Act
-
       const response = await request(app).get("/api/decision-support");
-
-      // Assert
 
       expect(response.status).toBe(200);
 
       expect(response.body.success).toBe(true);
 
-      expect(response.body.data).toHaveProperty("summary");
+      const data = response.body.data;
 
-      expect(response.body.data).toHaveProperty("statistics");
+      expect(data).toHaveProperty("summary");
 
-      expect(response.body.data).toHaveProperty("revenueForecast");
+      expect(data).toHaveProperty("statistics");
 
-      expect(response.body.data).toHaveProperty("inventoryForecast");
+      expect(data).toHaveProperty("revenueForecast");
 
-      expect(response.body.data).toHaveProperty("revenueTrend");
+      expect(data).toHaveProperty("inventoryForecast");
 
-      expect(response.body.data).toHaveProperty("inventoryTrend");
+      expect(data).toHaveProperty("revenueTrend");
 
-      expect(response.body.data).toHaveProperty("recommendations");
+      expect(data).toHaveProperty("inventoryTrend");
 
-      expect(response.body.data).toHaveProperty("alerts");
+      expect(data).toHaveProperty("recommendations");
+
+      expect(data).toHaveProperty("alerts");
     });
 
     it("should return numeric dashboard statistics", async () => {
@@ -364,24 +334,8 @@ describe("Decision Support API Integration Test", () => {
     });
   });
 
-  /**
-   * ==============================================
-   * EMPTY DATA HANDLING
-   * ==============================================
-   */
-
   describe("Empty Data Handling", () => {
     it("should return valid dashboard structure even when datasets are empty", async () => {
-      /**
-       * Real user scenario:
-       *
-       * Newly created branch
-       * has no operational data.
-       *
-       * Dashboard should still
-       * load successfully.
-       */
-
       const response = await request(app).get("/api/decision-support");
 
       expect(response.status).toBe(200);
@@ -392,21 +346,11 @@ describe("Decision Support API Integration Test", () => {
     });
   });
 
-  /**
-   * ==============================================
-   * INVALID ENDPOINT
-   * ==============================================
-   */
-
   describe("Decision Support Endpoint Validation", () => {
     it("should reject unknown Decision Support endpoint", async () => {
-      // Act
-
       const response = await request(app).get(
         "/api/decision-support/not-found",
       );
-
-      // Assert
 
       expect(response.status).toBe(404);
     });

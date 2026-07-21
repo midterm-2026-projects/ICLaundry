@@ -2,21 +2,10 @@
 
 import express from "express";
 
-import { getDecisionSupportDashboard } from "../controllers/DecisionSupportController.js";
+import { getDecisionSupportDashboardController } from "../controllers/DecisionSupportController.js";
 
 const router = express.Router();
 
-/**
- * ==============================================
- * DECISION SUPPORT ROUTES
- * ==============================================
- */
-
-/**
- * GET
- * /api/decision-support
- */
-
-router.get("/", getDecisionSupportDashboard);
+router.get("/", getDecisionSupportDashboardController);
 
 export default router;

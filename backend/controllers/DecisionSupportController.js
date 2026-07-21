@@ -2,38 +2,25 @@
 
 import { getDecisionSupport } from "../services/DecisionSupportService.js";
 
-/**
- * ==============================================
- * DECISION SUPPORT CONTROLLER
- * Handles Forecasting and DSS requests.
- * ==============================================
- */
-
-/**
- * ==============================================
- * GET DECISION SUPPORT DASHBOARD
- * ==============================================
- */
-
-export const getDecisionSupportDashboard = async (req, res) => {
+export const getDecisionSupportDashboardController = async (req, res) => {
   try {
-    const dashboard = await getDecisionSupport();
+    const data = await getDecisionSupport();
 
     return res.status(200).json({
       success: true,
-
-      data: dashboard,
+      message: "Decision Support dashboard retrieved successfully",
+      data,
     });
   } catch (error) {
+    console.error("DECISION SUPPORT ERROR:", error);
+
     return res.status(500).json({
       success: false,
-
-      message:
-        error.message || "Failed to generate Decision Support dashboard.",
+      message: error.message || "Failed to retrieve Decision Support dashboard",
     });
   }
 };
 
 export default {
-  getDecisionSupportDashboard,
+  getDecisionSupportDashboardController,
 };

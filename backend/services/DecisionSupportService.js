@@ -1,7 +1,6 @@
 // backend/services/DecisionSupportService.js
 
 import { getOrders } from "../models/OrderModel.js";
-
 import { getPayments } from "../models/PaymentModel.js";
 
 import {
@@ -38,20 +37,94 @@ const MONTH_NAMES = [
   "Dec",
 ];
 
+const isValidDate = (date) => {
+  const parsedDate = new Date(date);
+
+  return !Number.isNaN(parsedDate.getTime());
+};
+
 const getYearMonthKey = (date) => {
-  const d = new Date(date);
+  const parsedDate = new Date(date);
 
-  const year = d.getFullYear();
+  if (Number.isNaN(parsedDate.getTime())) {
+    return null;
+  }
 
-  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = parsedDate.getFullYear();
+
+  const month = String(parsedDate.getMonth() + 1).padStart(2, "0");
 
   return `${year}-${month}`;
 };
 
 const getMonthLabel = (yearMonth) => {
+  if (typeof yearMonth !== "string" || !yearMonth.includes("-")) {
+    return "Unknown Period";
+  }
+
   const [year, month] = yearMonth.split("-");
 
-  return `${MONTH_NAMES[Number(month) - 1]} ${year}`;
+  const monthIndex = Number(month) - 1;
+
+  if (monthIndex < 0 || monthIndex >= MONTH_NAMES.length) {
+    return "Unknown Period";
+  }
+
+  return `${MONTH_NAMES[monthIndex]} ${year}`;
+};
+
+const getNextMonthKey = (yearMonth = null) => {
+  let date;
+
+  if (yearMonth) {
+    date = new Date(`${yearMonth}-01T00:00:00`);
+  } else {
+    date = new Date();
+    date.setDate(1);
+  }
+
+  if (Number.isNaN(date.getTime())) {
+    date = new Date();
+    date.setDate(1);
+  }
+
+  date.setMonth(date.getMonth() + 1);
+
+  return getYearMonthKey(date);
+};
+
+/**
+ * ==============================================
+ * DATA NORMALIZATION
+ * ==============================================
+ */
+
+const normalizeRows = (result) => {
+  if (!result) {
+    return [];
+  }
+
+  /*
+   * mysql2 can return:
+   *
+   * [rows, fields]
+   */
+  if (Array.isArray(result) && Array.isArray(result[0])) {
+    return result[0];
+  }
+
+  /*
+   * Some models may return:
+   *
+   * {
+   *   rows: [...]
+   * }
+   */
+  if (typeof result === "object" && Array.isArray(result.rows)) {
+    return result.rows;
+  }
+
+  return Array.isArray(result) ? result : [];
 };
 
 /**
@@ -60,22 +133,39 @@ const getMonthLabel = (yearMonth) => {
  * ==============================================
  */
 
-const round = (value) => Number(Number(value).toFixed(2));
+const toNumber = (value) => {
+  const number = Number(value);
+
+  return Number.isFinite(number) ? number : 0;
+};
+
+const round = (value) => {
+  return Number(toNumber(value).toFixed(2));
+};
 
 const calculateAverage = (values) => {
-  if (!values.length) {
+  const numericValues = values
+    .map(toNumber)
+    .filter((value) => Number.isFinite(value));
+
+  if (numericValues.length === 0) {
     return 0;
   }
 
-  return values.reduce((sum, value) => sum + value, 0) / values.length;
+  const total = numericValues.reduce((sum, value) => sum + value, 0);
+
+  return total / numericValues.length;
 };
 
 const calculateGrowthRate = (previous, current) => {
-  if (previous === 0) {
+  const previousValue = toNumber(previous);
+  const currentValue = toNumber(current);
+
+  if (previousValue === 0) {
     return 0;
   }
 
-  return (current - previous) / previous;
+  return (currentValue - previousValue) / previousValue;
 };
 
 /**
@@ -88,19 +178,29 @@ const buildRevenueDataset = (payments) => {
   const monthlyRevenue = {};
 
   payments.forEach((payment) => {
-    const key = getYearMonthKey(payment.payment_date);
+    const paymentDate =
+      payment.payment_date ?? payment.created_at ?? payment.date;
 
-    monthlyRevenue[key] =
-      (monthlyRevenue[key] ?? 0) + Number(payment.amount || 0);
+    if (!paymentDate || !isValidDate(paymentDate)) {
+      return;
+    }
+
+    const key = getYearMonthKey(paymentDate);
+
+    if (!key) {
+      return;
+    }
+
+    monthlyRevenue[key] = (monthlyRevenue[key] ?? 0) + toNumber(payment.amount);
   });
 
   return Object.entries(monthlyRevenue)
-    .sort(([a], [b]) => a.localeCompare(b))
+    .sort(([firstMonth], [secondMonth]) =>
+      firstMonth.localeCompare(secondMonth),
+    )
     .map(([month, revenue]) => ({
       month,
-
       label: getMonthLabel(month),
-
       revenue: round(revenue),
     }));
 };
@@ -112,11 +212,15 @@ const buildRevenueDataset = (payments) => {
  */
 
 const generateRevenueForecast = (revenueDataset) => {
-  if (!revenueDataset.length) {
+  /*
+   * No historical payments means there is
+   * not enough data to create a forecast.
+   */
+  if (!Array.isArray(revenueDataset) || revenueDataset.length === 0) {
     return [];
   }
 
-  const revenues = revenueDataset.map((item) => item.revenue);
+  const revenues = revenueDataset.map((item) => toNumber(item.revenue));
 
   const movingAverage = calculateAverage(revenues);
 
@@ -132,31 +236,21 @@ const generateRevenueForecast = (revenueDataset) => {
 
   const forecast = revenueDataset.map((item) => ({
     period: item.label,
-
-    actual: item.revenue,
-
+    actual: round(item.revenue),
     forecast: null,
-
+    growthRate: null,
     type: "Historical",
   }));
 
   const latestMonth = revenueDataset[revenueDataset.length - 1].month;
 
-  const latestDate = new Date(`${latestMonth}-01`);
-
-  latestDate.setMonth(latestDate.getMonth() + 1);
-
-  const forecastKey = getYearMonthKey(latestDate);
+  const forecastKey = getNextMonthKey(latestMonth);
 
   forecast.push({
     period: getMonthLabel(forecastKey),
-
     actual: null,
-
-    forecast: round(forecastRevenue),
-
+    forecast: round(Math.max(0, forecastRevenue)),
     growthRate: round(growthRate * 100),
-
     type: "Forecast",
   });
 
@@ -171,37 +265,44 @@ const generateRevenueForecast = (revenueDataset) => {
 
 const generateInventoryForecast = (inventoryItems, usageLogs, restocks) => {
   return inventoryItems.map((item) => {
-    const usage = usageLogs.filter((log) => log.item_id === item.id);
+    const itemId = item.id ?? item.item_id;
+
+    const usage = usageLogs.filter(
+      (log) => String(log.item_id) === String(itemId),
+    );
 
     const restockHistory = restocks.filter(
-      (restock) => restock.item_id === item.id,
+      (restock) => String(restock.item_id) === String(itemId),
     );
 
     const averageUsage = calculateAverage(
-      usage.map((log) => Number(log.quantity_used)),
+      usage.map((log) => log.quantity_used ?? log.quantity ?? 0),
     );
 
     const averageRestock = calculateAverage(
-      restockHistory.map((restock) => Number(restock.quantity_added)),
+      restockHistory.map(
+        (restock) => restock.quantity_added ?? restock.quantity ?? 0,
+      ),
     );
 
-    const predictedStock =
-      Number(item.current_stock) - averageUsage + averageRestock;
+    const currentStock = toNumber(
+      item.current_stock ?? item.quantity ?? item.stock,
+    );
+
+    const minimumStock = toNumber(
+      item.minimum_stock ?? item.min_stock ?? item.reorder_level,
+    );
+
+    const predictedStock = currentStock - averageUsage + averageRestock;
 
     return {
-      itemId: item.id,
-
-      itemName: item.name,
-
-      currentStock: round(item.current_stock),
-
-      minimumStock: round(item.minimum_stock),
-
+      itemId,
+      itemName: item.name ?? item.item_name ?? "Unknown Item",
+      currentStock: round(currentStock),
+      minimumStock: round(minimumStock),
       averageUsage: round(averageUsage),
-
       averageRestock: round(averageRestock),
-
-      predictedStock: round(predictedStock < 0 ? 0 : predictedStock),
+      predictedStock: round(Math.max(0, predictedStock)),
     };
   });
 };
@@ -213,7 +314,7 @@ const generateInventoryForecast = (inventoryItems, usageLogs, restocks) => {
  */
 
 const analyzeRevenueTrend = (revenueForecast) => {
-  if (!revenueForecast.length) {
+  if (!Array.isArray(revenueForecast) || revenueForecast.length === 0) {
     return {
       trend: "Stable",
       growthRate: 0,
@@ -231,10 +332,9 @@ const analyzeRevenueTrend = (revenueForecast) => {
     };
   }
 
-  const growthRate = Number(forecast.growthRate ?? 0);
+  const growthRate = toNumber(forecast.growthRate);
 
   let trend = "Stable";
-
   let score = 0;
 
   if (growthRate >= 20) {
@@ -256,9 +356,7 @@ const analyzeRevenueTrend = (revenueForecast) => {
 
   return {
     trend,
-
-    growthRate,
-
+    growthRate: round(growthRate),
     score,
   };
 };
@@ -272,7 +370,6 @@ const analyzeRevenueTrend = (revenueForecast) => {
 const analyzeInventoryTrend = (inventoryForecast) => {
   return inventoryForecast.map((item) => {
     let trend = "Healthy";
-
     let score = 5;
 
     if (item.predictedStock <= 0) {
@@ -291,9 +388,7 @@ const analyzeInventoryTrend = (inventoryForecast) => {
 
     return {
       ...item,
-
       trend,
-
       score,
     };
   });
@@ -308,160 +403,110 @@ const analyzeInventoryTrend = (inventoryForecast) => {
 const generateRecommendations = (revenueTrend, inventoryTrend) => {
   const recommendations = [];
 
-  /**
-   * Revenue Recommendations
-   */
-
   switch (revenueTrend.trend) {
     case "Excellent Growth":
       recommendations.push({
         priority: "Low",
-
         category: "Revenue",
-
         title: "Expand Business Operations",
-
         description:
           "Revenue growth is excellent. Consider expanding marketing, staffing, or branch capacity.",
       });
-
       break;
 
     case "Growing":
       recommendations.push({
         priority: "Medium",
-
         category: "Revenue",
-
         title: "Maintain Current Strategy",
-
         description:
           "Revenue continues to increase. Maintain pricing strategy and monitor customer demand.",
       });
-
       break;
 
     case "Slight Growth":
       recommendations.push({
         priority: "Low",
-
         category: "Revenue",
-
         title: "Increase Customer Acquisition",
-
         description:
           "Revenue is improving gradually. Promotional campaigns may accelerate growth.",
       });
-
       break;
 
     case "Slight Decline":
       recommendations.push({
         priority: "Medium",
-
         category: "Revenue",
-
         title: "Review Sales Performance",
-
         description:
           "Revenue has started to decline. Evaluate promotions, pricing, and customer retention.",
       });
-
       break;
 
     case "Declining":
       recommendations.push({
         priority: "High",
-
         category: "Revenue",
-
         title: "Immediate Revenue Recovery Plan",
-
         description:
           "Revenue has significantly declined. Immediate business intervention is recommended.",
       });
-
       break;
 
     default:
       recommendations.push({
         priority: "Low",
-
         category: "Revenue",
-
         title: "Maintain Business Performance",
-
         description:
           "Revenue remains stable. Continue monitoring monthly performance.",
       });
+      break;
   }
-
-  /**
-   * Inventory Recommendations
-   */
 
   inventoryTrend.forEach((item) => {
     switch (item.trend) {
       case "Out of Stock":
         recommendations.push({
           priority: "Critical",
-
           category: "Inventory",
-
           title: `Restock ${item.itemName}`,
-
           description: `${item.itemName} has no forecasted stock remaining. Purchase inventory immediately.`,
         });
-
         break;
 
       case "Low Stock":
         recommendations.push({
           priority: "High",
-
           category: "Inventory",
-
           title: `Prepare Restocking for ${item.itemName}`,
-
           description: `${item.itemName} is predicted to reach the minimum stock level soon.`,
         });
-
         break;
 
       case "Monitoring":
         recommendations.push({
           priority: "Medium",
-
           category: "Inventory",
-
           title: `Monitor ${item.itemName}`,
-
           description: `${item.itemName} inventory is still sufficient but should be monitored regularly.`,
         });
-
         break;
 
       case "No Usage":
         recommendations.push({
           priority: "Low",
-
           category: "Inventory",
-
-          title: `Review Inventory Usage`,
-
+          title: "Review Inventory Usage",
           description: `${item.itemName} has no recorded usage. Verify whether inventory logging is complete.`,
         });
-
         break;
 
       default:
         break;
     }
   });
-
-  /**
-   * Sort by Priority
-   */
 
   const priorityOrder = {
     Critical: 1,
@@ -471,11 +516,14 @@ const generateRecommendations = (revenueTrend, inventoryTrend) => {
   };
 
   recommendations.sort(
-    (a, b) => priorityOrder[a.priority] - priorityOrder[b.priority],
+    (first, second) =>
+      (priorityOrder[first.priority] ?? 999) -
+      (priorityOrder[second.priority] ?? 999),
   );
 
   return recommendations;
 };
+
 /**
  * ==============================================
  * DSS ALERT ENGINE
@@ -484,10 +532,6 @@ const generateRecommendations = (revenueTrend, inventoryTrend) => {
 
 const generateAlerts = (revenueTrend, inventoryTrend) => {
   const alerts = [];
-
-  /**
-   * Revenue Alerts
-   */
 
   switch (revenueTrend.trend) {
     case "Declining":
@@ -498,7 +542,6 @@ const generateAlerts = (revenueTrend, inventoryTrend) => {
         description:
           "Revenue has significantly decreased compared to previous periods.",
       });
-
       break;
 
     case "Slight Decline":
@@ -509,16 +552,11 @@ const generateAlerts = (revenueTrend, inventoryTrend) => {
         description:
           "Revenue has started to decline. Continue monitoring sales performance.",
       });
-
       break;
 
     default:
       break;
   }
-
-  /**
-   * Inventory Alerts
-   */
 
   inventoryTrend.forEach((item) => {
     switch (item.trend) {
@@ -529,7 +567,6 @@ const generateAlerts = (revenueTrend, inventoryTrend) => {
           title: `${item.itemName} Out of Stock`,
           description: `${item.itemName} has no forecasted remaining stock.`,
         });
-
         break;
 
       case "Low Stock":
@@ -539,7 +576,6 @@ const generateAlerts = (revenueTrend, inventoryTrend) => {
           title: `${item.itemName} Low Stock`,
           description: `${item.itemName} is predicted to reach its minimum stock level.`,
         });
-
         break;
 
       default:
@@ -558,17 +594,14 @@ const generateAlerts = (revenueTrend, inventoryTrend) => {
 
 const generateSummary = (revenueTrend, recommendations, alerts) => {
   return {
-    generatedAt: new Date(),
-
+    generatedAt: new Date().toISOString(),
     revenueTrend: revenueTrend.trend,
-
-    growthRate: revenueTrend.growthRate,
-
+    growthRate: toNumber(revenueTrend.growthRate),
     recommendationCount: recommendations.length,
-
     alertCount: alerts.length,
-
-    hasCriticalAlerts: alerts.some((alert) => alert.severity === "Critical"),
+    hasCriticalAlerts: alerts.some(
+      (alert) => String(alert.severity).toLowerCase() === "critical",
+    ),
   };
 };
 
@@ -579,34 +612,33 @@ const generateSummary = (revenueTrend, recommendations, alerts) => {
  */
 
 export const getDecisionSupport = async () => {
-  /**
-   * Retrieve data directly from models
-   */
+  const [
+    ordersResult,
+    paymentsResult,
+    inventoryItemsResult,
+    usageLogsResult,
+    restocksResult,
+  ] = await Promise.all([
+    getOrders(),
+    getPayments(),
+    getInventoryItems(),
+    getInventoryUsageLogs(),
+    getInventoryRestocks(),
+  ]);
 
-  const [orders, payments, inventoryItems, usageLogs, restocks] =
-    await Promise.all([
-      getOrders(),
+  const orders = normalizeRows(ordersResult);
 
-      getPayments(),
+  const payments = normalizeRows(paymentsResult);
 
-      getInventoryItems(),
+  const inventoryItems = normalizeRows(inventoryItemsResult);
 
-      getInventoryUsageLogs(),
+  const usageLogs = normalizeRows(usageLogsResult);
 
-      getInventoryRestocks(),
-    ]);
-
-  /**
-   * Revenue Forecast
-   */
+  const restocks = normalizeRows(restocksResult);
 
   const revenueDataset = buildRevenueDataset(payments);
 
   const revenueForecast = generateRevenueForecast(revenueDataset);
-
-  /**
-   * Inventory Forecast
-   */
 
   const inventoryForecast = generateInventoryForecast(
     inventoryItems,
@@ -614,53 +646,30 @@ export const getDecisionSupport = async () => {
     restocks,
   );
 
-  /**
-   * Trend Analysis
-   */
-
   const revenueTrend = analyzeRevenueTrend(revenueForecast);
 
   const inventoryTrend = analyzeInventoryTrend(inventoryForecast);
-
-  /**
-   * Decision Support
-   */
 
   const recommendations = generateRecommendations(revenueTrend, inventoryTrend);
 
   const alerts = generateAlerts(revenueTrend, inventoryTrend);
 
-  /**
-   * Summary
-   */
-
   const summary = generateSummary(revenueTrend, recommendations, alerts);
-
-  /**
-   * Dashboard Response
-   */
 
   return {
     summary,
 
     statistics: {
       totalOrders: orders.length,
-
       totalPayments: payments.length,
-
       totalInventoryItems: inventoryItems.length,
     },
 
     revenueForecast,
-
     inventoryForecast,
-
     revenueTrend,
-
     inventoryTrend,
-
     recommendations,
-
     alerts,
   };
 };
