@@ -17,9 +17,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ─────────────────────────────────────────────
-  # 1. BACKEND TESTS
-  # ─────────────────────────────────────────────
   backend-tests:
     name: Backend Tests
     runs-on: ubuntu-latest
@@ -53,18 +50,6 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
-      - name: Upload backend coverage
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-coverage
-          path: backend/coverage
-          if-no-files-found: ignore
-          retention-days: 7
-
-  # ─────────────────────────────────────────────
-  # 2. FRONTEND TESTS
-  # ─────────────────────────────────────────────
   frontend-tests:
     name: Frontend Tests
     runs-on: ubuntu-latest
@@ -88,7 +73,7 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
-      - name: Run frontend unit tests
+      - name: Run frontend tests
         run: npm run test:unit
         env:
           CI: true
@@ -98,9 +83,6 @@ jobs:
         env:
           VITE_API_URL: http://127.0.0.1:5000/api
 
-  # ─────────────────────────────────────────────
-  # 3. PLAYWRIGHT E2E TESTS
-  # ─────────────────────────────────────────────
   playwright-e2e:
     name: Playwright E2E
     runs-on: ubuntu-latest
@@ -109,7 +91,6 @@ jobs:
     env:
       CI: true
       NODE_ENV: test
-      WATERWISE_E2E: true
 
       PORT: 5000
 
@@ -117,9 +98,9 @@ jobs:
       VITE_API_URL: http://127.0.0.1:5000/api
 
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      SUPABASE_URL: https://ufynqxpilkrpokdsxuwo.supabase.co
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmeW5xeHBpbGtycG9rZHN4dXdvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjkyMzg5MywiZXhwIjoyMDkyNDk5ODkzfQ.ubVNBgGQiUYWUKm0J-FYLA-MKCWm7wvzOMAEI4lf8zU
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
     steps:
       - name: Check out repository
@@ -142,43 +123,43 @@ jobs:
         working-directory: backend
         run: npm ci
 
-      - name: Install Chromium and system dependencies
+      - name: Install Playwright Chromium
         working-directory: frontend
         run: npx playwright install --with-deps chromium
 
-      - name: Start backend server
+      - name: Start backend
         working-directory: backend
         run: |
           npm start > backend.log 2>&1 &
           echo $! > backend.pid
 
-      - name: Wait for backend server
+      - name: Wait for backend
         working-directory: frontend
         run: |
           npx wait-on tcp:127.0.0.1:5000 --timeout 120000
 
-      - name: Show backend startup logs
-        working-directory: backend
-        run: |
-          echo "===== BACKEND STARTUP LOG ====="
-          cat backend.log || true
-
       - name: Verify backend process
         working-directory: backend
         run: |
+          echo "Backend PID:"
+          cat backend.pid
+
           if ! kill -0 "$(cat backend.pid)" 2>/dev/null; then
-            echo "Backend process stopped unexpectedly."
+            echo "Backend stopped unexpectedly."
+            echo "===== BACKEND LOG ====="
             cat backend.log || true
             exit 1
           fi
 
-          echo "Backend process is running."
+          echo "Backend is running."
+          echo "===== BACKEND STARTUP LOG ====="
+          cat backend.log || true
 
-      - name: Show discovered Playwright tests
+      - name: List Playwright tests
         working-directory: frontend
         run: npx playwright test --list
 
-      - name: Run Playwright E2E tests
+      - name: Run Playwright E2E
         working-directory: frontend
         run: npm run test:e2e
 
@@ -189,7 +170,7 @@ jobs:
           echo "===== BACKEND LOG ====="
           cat backend.log || true
 
-      - name: Upload Playwright HTML report
+      - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -216,9 +197,6 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-  # ─────────────────────────────────────────────
-  # 4. FINAL RESULT
-  # ─────────────────────────────────────────────
   ci-success:
     name: CI Passed
     runs-on: ubuntu-latest
@@ -230,7 +208,7 @@ jobs:
       - playwright-e2e
 
     steps:
-      - name: Check all jobs
+      - name: Check job results
         run: |
           if [ "${{ needs.backend-tests.result }}" != "success" ] || \
              [ "${{ needs.frontend-tests.result }}" != "success" ] || \
