@@ -1,20 +1,10 @@
 import express from "express";
-
 import {
-  createInitialPaymentController,
-  completePaymentController,
+  initialPayment,
+  completePayment
 } from "../controllers/PaymentController.js";
 
 const router = express.Router();
-
-/**
- * Initial payment (minimum 50%)
- */
-router.post("/initial", createInitialPaymentController);
-
-/**
- * Remaining payment
- */
-router.post("/complete", completePaymentController);
-
+router.post("/initial", initialPayment);
+router.post("/complete", completePayment);
 export default router;
