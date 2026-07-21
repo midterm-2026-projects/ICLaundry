@@ -59,7 +59,9 @@ const NewOrderModal = ({ onCreateOrder, onClose }) => {
     setAddons((previous) =>
       previous
         .map((item) =>
-          item.id === addonId ? { ...item, quantity: item.quantity - 1 } : item,
+          item.id === addonId
+            ? { ...item, quantity: item.quantity - 1 }
+            : item,
         )
         .filter((item) => item.quantity > 0),
     );
@@ -103,42 +105,40 @@ const NewOrderModal = ({ onCreateOrder, onClose }) => {
   }, [formData.amount_paid, totalPrice]);
 
   const handleSubmit = async () => {
-    try {
-      const payload = {
-        customer_name: form.customer_name,
-
-        customer_phone: form.customer_phone,
-
-        customer_email: form.customer_email || null,
-
-        weight_kg: Number(form.weight_kg),
-
-        addons: selectedAddons,
-
-        total_price: totalPrice,
-
-        amount_paid: Number(form.amount_paid),
-
-        payment_method: form.payment_method,
-      };
-
-      console.log("FINAL ORDER PAYLOAD:", payload);
-
-      await createOrder(payload);
-
-      alert("Order created successfully!");
-
-      onClose();
-
-      if (onSuccess) {
-        onSuccess();
-      }
-    } catch (error) {
-      console.error("Create order failed:", error);
-
-      alert("Failed to create order");
-
+    if (
+      !formData.customer_name ||
+      !formData.customer_phone ||
+      !formData.weight_kg
+    ) {
+      alert("Please complete customer details and weight.");
       return;
+    }
+
+    const orderData = {
+      customer_name: formData.customer_name.trim(),
+      customer_phone: formData.customer_phone.trim(),
+      customer_email: formData.customer_email.trim() || null,
+      weight_kg: Number(formData.weight_kg),
+      addons: addons.map((item) => ({
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+      })),
+      total_price: Number(totalPrice),
+      amount_paid: Number(formData.amount_paid || 0),
+      payment_method: formData.payment_method,
+      payment_status: paymentStatus,
+      notes: formData.notes || "",
+    };
+
+    console.log("FINAL ORDER PAYLOAD:", orderData);
+
+    try {
+      await onCreateOrder(orderData);
+      alert("Order created successfully!");
+    } catch (error) {
+      console.error("CREATE ORDER FAILED:", error);
+      alert(error.message || "Failed to create order");
     }
   };
 
@@ -269,9 +269,7 @@ const NewOrderModal = ({ onCreateOrder, onClose }) => {
               <div className="soap-selected-info">
                 <CheckCircle2 size={15} />
                 <span>
-                  {addons
-                    .map((item) => `${item.name} ×${item.quantity}`)
-                    .join(", ")}{" "}
+                  {addons.map((item) => `${item.name} ×${item.quantity}`).join(", ")}{" "}
                   — will be deducted from inventory
                 </span>
               </div>
