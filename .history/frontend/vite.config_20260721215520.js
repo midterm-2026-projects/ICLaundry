@@ -30,7 +30,7 @@ export default defineConfig({
 
     globals: true,
 
-    setupFiles: ["./tests/setupTests.js"],
+    setupFiles: ["./test/setupTests.js"],
 
     exclude: ["node_modules/**", "dist/**", "tests/e2e/**"],
   },
