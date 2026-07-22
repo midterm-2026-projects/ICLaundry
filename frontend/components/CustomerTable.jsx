@@ -1,130 +1,99 @@
-// frontend/src/components/CustomerTable.jsx
+import { Edit2, Mail, MapPin, Phone, Trash2, UserRound } from "lucide-react";
 
 const CustomerTable = ({ customers = [], onEdit, onDelete }) => {
   return (
-    <div
-      className="
-        overflow-x-auto
-        rounded-lg
-        border
-        bg-white
-      "
-    >
-      <table
-        className="
-          min-w-full
-          text-sm
-        "
-      >
-        <thead>
-          <tr
-            className="
-              border-b
-              bg-gray-50
-              text-left
-            "
-          >
-            <th className="px-4 py-3">Customer Name</th>
+    <div className="customers-card">
+      <div className="customers-table-wrapper">
+        <table className="customers-table">
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Contact</th>
+              <th>Address</th>
+              <th>Notes</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
 
-            <th className="px-4 py-3">Phone</th>
+          <tbody>
+            {customers.length > 0 ? (
+              customers.map((customer) => (
+                <tr key={customer.id}>
+                  <td>
+                    <div className="customer-identity">
+                      <span className="customer-avatar" aria-hidden="true">
+                        <UserRound size={18} />
+                      </span>
+                      <div>
+                        <strong>{customer.name}</strong>
+                        <span>Customer profile</span>
+                      </div>
+                    </div>
+                  </td>
 
-            <th className="px-4 py-3">Email</th>
+                  <td>
+                    <div className="customer-contact">
+                      <span>
+                        <Phone size={14} aria-hidden="true" />
+                        {customer.phone || "No phone number"}
+                      </span>
+                      <span>
+                        <Mail size={14} aria-hidden="true" />
+                        {customer.email || "No email address"}
+                      </span>
+                    </div>
+                  </td>
 
-            <th className="px-4 py-3">Address</th>
+                  <td>
+                    <span className="customer-address">
+                      <MapPin size={15} aria-hidden="true" />
+                      {customer.address || "No address provided"}
+                    </span>
+                  </td>
 
-            <th className="px-4 py-3">Notes</th>
+                  <td className="customer-notes">
+                    {customer.notes || "No notes"}
+                  </td>
 
-            <th className="px-4 py-3">Actions</th>
-          </tr>
-        </thead>
+                  <td>
+                    <div className="customer-row-actions">
+                      <button
+                        type="button"
+                        onClick={() => onEdit(customer)}
+                        className="btn-icon customer-edit-button"
+                        aria-label={`Edit ${customer.name}`}
+                        title="Edit customer"
+                      >
+                        <Edit2 size={16} aria-hidden="true" />
+                      </button>
 
-        <tbody>
-          {customers.length > 0 ? (
-            customers.map((customer) => (
-              <tr
-                key={customer.id}
-                className="
-                  border-b
-                  hover:bg-gray-50
-                "
-              >
-                <td
-                  className="
-                    px-4
-                    py-3
-                    font-medium
-                  "
-                >
-                  {customer.name}
-                </td>
-
-                <td className="px-4 py-3">{customer.phone || "-"}</td>
-
-                <td className="px-4 py-3">{customer.email || "-"}</td>
-
-                <td className="px-4 py-3">{customer.address || "-"}</td>
-
-                <td className="px-4 py-3">{customer.notes || "-"}</td>
-
-                <td className="px-4 py-3">
-                  <div
-                    className="
-                      flex
-                      gap-2
-                    "
-                  >
-                    <button
-                      type="button"
-                      onClick={() => onEdit(customer)}
-                      className="
-                        rounded
-                        bg-yellow-500
-                        px-3
-                        py-1
-                        text-xs
-                        text-white
-                        hover:bg-yellow-600
-                      "
-                    >
-                      Edit
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => onDelete(customer)}
-                      className="
-                        rounded
-                        bg-red-500
-                        px-3
-                        py-1
-                        text-xs
-                        text-white
-                        hover:bg-red-600
-                      "
-                    >
-                      Delete
-                    </button>
-                  </div>
+                      <button
+                        type="button"
+                        onClick={() => onDelete(customer)}
+                        className="btn-icon customer-delete-button"
+                        aria-label={`Delete ${customer.name}`}
+                        title="Delete customer"
+                      >
+                        <Trash2 size={16} aria-hidden="true" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5" className="customers-empty-state">
+                  <span className="customers-empty-icon" aria-hidden="true">
+                    <UserRound size={25} />
+                  </span>
+                  <strong>No customers found</strong>
+                  <p>Try a different search or add your first customer.</p>
                 </td>
               </tr>
-            ))
-          ) : (
-            <tr>
-              <td
-                colSpan="6"
-                className="
-                  px-4
-                  py-8
-                  text-center
-                  text-gray-500
-                "
-              >
-                No customers found.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

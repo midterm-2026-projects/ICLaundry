@@ -2,6 +2,16 @@
 
 import { supabase } from "../config/db.js";
 
+const INVENTORY_SELECT = "*, inventory_categories(name)";
+
+const includeCategoryName = (item) => {
+  if (!item) return item;
+
+  const { inventory_categories: category, ...inventoryItem } = item;
+
+  return { ...inventoryItem, category: category?.name ?? "" };
+};
+
 /**
  * ==============================================
  * INVENTORY ITEM MODEL
@@ -15,14 +25,14 @@ import { supabase } from "../config/db.js";
 export const getInventoryItems = async () => {
   const { data, error } = await supabase
     .from("inventory_items")
-    .select("*")
+    .select(INVENTORY_SELECT)
     .order("name", { ascending: true });
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return data;
+  return data.map(includeCategoryName);
 };
 
 /**
@@ -31,7 +41,7 @@ export const getInventoryItems = async () => {
 export const getInventoryItemById = async (id) => {
   const { data, error } = await supabase
     .from("inventory_items")
-    .select("*")
+    .select(INVENTORY_SELECT)
     .eq("id", id)
     .maybeSingle();
 
@@ -39,7 +49,7 @@ export const getInventoryItemById = async (id) => {
     throw new Error(error.message);
   }
 
-  return data;
+  return includeCategoryName(data);
 };
 
 /**
@@ -59,13 +69,25 @@ export const getInventoryItemByName = async (name) => {
   return data;
 };
 
+export const getInventoryCategoryByName = async (name) => {
+  const { data, error } = await supabase
+    .from("inventory_categories")
+    .select("id, name")
+    .ilike("name", name)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+
+  return data;
+};
+
 /**
  * Get inventory items by branch
  */
 export const getInventoryItemsByBranch = async (branch) => {
   const { data, error } = await supabase
     .from("inventory_items")
-    .select("*")
+    .select(INVENTORY_SELECT)
     .eq("branch", branch)
     .order("name", { ascending: true });
 
@@ -73,7 +95,7 @@ export const getInventoryItemsByBranch = async (branch) => {
     throw new Error(error.message);
   }
 
-  return data;
+  return data.map(includeCategoryName);
 };
 
 /**
@@ -146,7 +168,8 @@ export const getInventoryRestocks = async () => {
         id,
         name,
         unit,
-        branch
+        branch,
+        cost_per_unit
       )
     `,
     )
@@ -180,9 +203,14 @@ export const getInventoryRestocksByItem = async (itemId) => {
  * Insert inventory restock
  */
 export const insertInventoryRestock = async (inventoryRestock) => {
+  const restockRecord = {
+    item_id: inventoryRestock.item_id,
+    quantity_added: inventoryRestock.quantity_added,
+  };
+
   const { data, error } = await supabase
     .from("inventory_restocks")
-    .insert(inventoryRestock)
+    .insert(restockRecord)
     .select()
     .single();
 
@@ -314,6 +342,8 @@ export default {
   getInventoryItemById,
 
   getInventoryItemByName,
+
+  getInventoryCategoryByName,
 
   getInventoryItemsByBranch,
 

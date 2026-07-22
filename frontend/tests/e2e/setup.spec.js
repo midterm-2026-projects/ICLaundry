@@ -36,15 +36,9 @@ Status: ${response?.status()}`,
 
     await expect(page.locator("body")).toBeVisible();
 
-    const navigationButton = page
-      .getByRole("button", {
-        name: /customers|orders/i,
-      })
-      .first();
-
-    await expect(navigationButton).toBeVisible({
-      timeout: 30_000,
-    });
+    for (const destination of ["Analytics", "Orders", "Customers", "Staff", "Inventory"]) {
+      await expect(page.getByRole("button", { name: destination, exact: true })).toBeVisible({ timeout: 30_000 });
+    }
 
     if (requestFailures.length > 0) {
       console.warn("[Application setup request failures]", requestFailures);

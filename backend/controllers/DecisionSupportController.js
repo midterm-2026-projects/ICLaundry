@@ -4,7 +4,7 @@ import { getDecisionSupport } from "../services/DecisionSupportService.js";
 
 export const getDecisionSupportDashboardController = async (req, res) => {
   try {
-    const data = await getDecisionSupport();
+    const data = await getDecisionSupport(req.query);
 
     return res.status(200).json({
       success: true,

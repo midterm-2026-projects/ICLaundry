@@ -28,9 +28,16 @@ const Dashboard = () => {
         className="
           flex
           flex-wrap
+          justify-center
           gap-4
         "
       >
+        <Link to="/analytics">
+          <button className="rounded-lg bg-sky-600 px-6 py-3 font-medium text-white transition hover:bg-sky-700">
+            Analytics
+          </button>
+        </Link>
+
         <Link to="/orders">
           <button
             className="
@@ -79,6 +86,23 @@ const Dashboard = () => {
             "
           >
             Staff
+          </button>
+        </Link>
+
+        <Link to="/inventory">
+          <button
+            className="
+              rounded-lg
+              bg-orange-600
+              px-6
+              py-3
+              font-medium
+              text-white
+              transition
+              hover:bg-orange-700
+            "
+          >
+            Inventory
           </button>
         </Link>
       </div>

@@ -10,6 +10,7 @@ import branchRoutes from "./routes/BranchRoutes.js";
 import analyticsRoutes from "./routes/AnalyticsRoutes.js";
 import decisionSupportRoutes from "./routes/DecisionSupportRoutes.js";
 import customerRoutes from "./routes/CustomerRoutes.js";
+import inventoryRoutes from "./routes/InventoryRoutes.js";
 
 const app = express();
 
@@ -42,5 +43,7 @@ app.use("/api/analytics", analyticsRoutes);
 app.use("/api/decision-support", decisionSupportRoutes);
 
 app.use("/api/customers", customerRoutes);
+
+app.use("/api/inventory", inventoryRoutes);
 
 export default app;

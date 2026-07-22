@@ -137,6 +137,21 @@ Response: ${responseBody}`,
  */
 
 test.describe("Customer Management Workflow", () => {
+  test("validates required customer fields and cancels safely", async ({ page }) => {
+    await page.route("**/api/customers**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ success: true, data: [] }) }));
+    await page.goto("/customers");
+    await page.getByRole("button", { name: /add customer/i }).click();
+
+    page.once("dialog", async (dialog) => {
+      expect(dialog.message()).toMatch(/customer name is required/i);
+      await dialog.accept();
+    });
+    await page.getByRole("button", { name: /create customer/i }).click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await page.getByRole("button", { name: "Cancel" }).click();
+    await expect(page.getByRole("dialog")).toBeHidden();
+  });
+
   test("should successfully perform the complete customer workflow", async ({
     page,
   }) => {

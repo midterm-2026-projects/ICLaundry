@@ -172,60 +172,54 @@ const Customers = () => {
   };
 
   if (loading) {
-    return <p>Loading customers...</p>;
+    return <div className="customers-loading">Loading customers...</div>;
   }
+
   return (
-    <div
-      className="
-        space-y-6
-        p-6
-      "
-    >
-      <div
-        className="
-          flex
-          flex-col
-          gap-4
-          md:flex-row
-          md:items-center
-          md:justify-between
-        "
-      >
-        <CustomerSearch value={searchValue} onSearchChange={setSearchValue} />
+    <div className="customers-page">
+      <div className="customers-shell">
+        <header className="customers-header">
+          <div className="customers-heading">
+            <h1>Customers</h1>
+            <p>Manage customer profiles and contact information in one place.</p>
+          </div>
 
-        <CustomerActions onAddCustomer={handleAddCustomer} />
-      </div>
+          <CustomerActions onAddCustomer={handleAddCustomer} />
+        </header>
 
-      {error && (
-        <p
-          className="
-            text-red-500
-          "
-        >
-          {error}
-        </p>
-      )}
+        <div className="customers-toolbar">
+          <CustomerSearch
+            value={searchValue}
+            onSearchChange={setSearchValue}
+          />
 
-      <CustomerTable
-        customers={filteredCustomers}
-        onEdit={handleEditCustomer}
-        onDelete={handleDeleteCustomer}
-      />
+          <span className="customers-count">
+            {filteredCustomers.length} customer
+            {filteredCustomers.length === 1 ? "" : "s"}
+          </span>
+        </div>
 
-      {showModal && (
-        <CustomerModal
-          customer={selectedCustomer}
-          isEditing={editing}
-          onClose={() => {
-            setShowModal(false);
+        {error && <p className="customers-error">{error}</p>}
 
-            setSelectedCustomer(null);
-
-            setEditing(false);
-          }}
-          onSubmit={editing ? handleUpdateCustomer : handleCreateCustomer}
+        <CustomerTable
+          customers={filteredCustomers}
+          onEdit={handleEditCustomer}
+          onDelete={handleDeleteCustomer}
         />
-      )}
+
+        {showModal && (
+          <CustomerModal
+            customer={selectedCustomer}
+            isEditing={editing}
+            onClose={() => {
+              setShowModal(false);
+              setSelectedCustomer(null);
+              setEditing(false);
+            }}
+            onSubmit={editing ? handleUpdateCustomer : handleCreateCustomer}
+          />
+        )}
+      </div>
     </div>
   );
 };

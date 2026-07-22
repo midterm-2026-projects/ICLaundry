@@ -1,49 +1,16 @@
-const BASE_URL = "http://localhost:3000/api/analytics";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
 
-/**
- * ==============================================
- * ANALYTICS API
- * ==============================================
- */
-
-/**
- * Retrieve Dashboard Analytics
- */
-export const getDashboardAnalytics = async ({
-  startDate = "",
-  endDate = "",
-  branchId = "",
-  period = "",
-} = {}) => {
-  const params = new URLSearchParams();
-
-  if (startDate) {
-    params.append("startDate", startDate);
-  }
-
-  if (endDate) {
-    params.append("endDate", endDate);
-  }
-
-  if (branchId) {
-    params.append("branchId", branchId);
-  }
-
-  if (period) {
-    params.append("period", period);
-  }
-
-  const response = await fetch(`${BASE_URL}/dashboard?${params.toString()}`);
-
-  if (!response.ok) {
-    throw new Error("Failed to retrieve dashboard analytics.");
-  }
-
-  const result = await response.json();
-
+const requestJson = async (path, params = {}) => {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => { if (value) query.set(key, value); });
+  const response = await fetch(`${API_BASE_URL}${path}${query.size ? `?${query}` : ""}`);
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.message || "Unable to load analytics data.");
   return result.data;
 };
 
-export default {
-  getDashboardAnalytics,
-};
+export const getDashboardAnalytics = (filters = {}) => requestJson("/analytics/dashboard", filters);
+export const getDecisionSupportAnalytics = (filters = {}) => requestJson("/decision-support", filters);
+export const getAnalyticsBranches = () => requestJson("/branches");
+
+export default { getDashboardAnalytics, getDecisionSupportAnalytics, getAnalyticsBranches };

@@ -1,21 +1,14 @@
+import { Plus } from "lucide-react";
+
 const CustomerActions = ({ onAddCustomer }) => {
   return (
     <button
       type="button"
       onClick={onAddCustomer}
-      className="
-        rounded-lg
-        bg-blue-600
-        px-4
-        py-2
-        text-sm
-        font-medium
-        text-white
-        transition
-        hover:bg-blue-700
-      "
+      className="btn btn-primary customer-add-button"
     >
-      + Add Customer
+      <Plus size={18} aria-hidden="true" />
+      Add Customer
     </button>
   );
 };

@@ -14,15 +14,23 @@ vi.mock("../../models/PaymentModel.js", () => ({
   getPayments: vi.fn(),
 }));
 
+vi.mock("../../models/InventoryModel.js", () => ({
+  getInventoryRestocks: vi.fn(),
+}));
+
 import { getOrders } from "../../models/OrderModel.js";
 
 import { getPayments } from "../../models/PaymentModel.js";
+
+import { getInventoryRestocks } from "../../models/InventoryModel.js";
 
 import { getDashboardAnalytics } from "../../services/AnalyticsService.js";
 
 describe("Analytics Service Unit Test", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+
+    getInventoryRestocks.mockResolvedValue([]);
   });
 
   /**
@@ -84,7 +92,8 @@ describe("Analytics Service Unit Test", () => {
 
       expect(result.totalOrders).toBe(2);
 
-      expect(result.revenueDataset).toHaveLength(2);
+      // Payments in the same month are grouped into one chart point.
+      expect(result.revenueDataset).toHaveLength(1);
 
       expect(result.expenseDataset).toHaveLength(0);
     });
@@ -216,6 +225,44 @@ describe("Analytics Service Unit Test", () => {
       expect(result.totalOrders).toBe(0);
 
       expect(result.revenueDataset).toHaveLength(0);
+    });
+  });
+
+  describe("Period Aggregation", () => {
+    beforeEach(() => {
+      getOrders.mockResolvedValue([]);
+      getPayments.mockResolvedValue([
+        { id: "p1", amount: 100, payment_date: "2025-12-31T10:00:00Z" },
+        { id: "p2", amount: 200, payment_date: "2026-01-05T10:00:00Z" },
+        { id: "p3", amount: 300, payment_date: "2026-02-10T10:00:00Z" },
+      ]);
+    });
+
+    it("groups weekly analytics by individual day", async () => {
+      const result = await getDashboardAnalytics({ period: "weekly" });
+      expect(result.revenueDataset).toHaveLength(3);
+      expect(result.revenueDataset[1].label).toMatch(/Mon|Jan/);
+    });
+
+    it("groups monthly analytics by calendar month", async () => {
+      const result = await getDashboardAnalytics({ period: "monthly" });
+      expect(result.revenueDataset.map((item) => item.id)).toEqual([
+        "2025-12",
+        "2026-01",
+        "2026-02",
+      ]);
+    });
+
+    it("groups yearly analytics by calendar year", async () => {
+      const result = await getDashboardAnalytics({ period: "yearly" });
+      expect(result.revenueDataset).toHaveLength(2);
+      expect(result.revenueDataset[1]).toMatchObject({ label: "2026", value: 500 });
+    });
+
+    it("rejects unsupported periods", async () => {
+      await expect(getDashboardAnalytics({ period: "daily" })).rejects.toThrow(
+        "Period must be weekly, monthly, or yearly",
+      );
     });
   });
 

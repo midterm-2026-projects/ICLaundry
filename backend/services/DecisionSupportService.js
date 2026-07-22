@@ -611,7 +611,7 @@ const generateSummary = (revenueTrend, recommendations, alerts) => {
  * ==============================================
  */
 
-export const getDecisionSupport = async () => {
+export const getDecisionSupport = async ({ startDate = "", endDate = "", branchId = "" } = {}) => {
   const [
     ordersResult,
     paymentsResult,
@@ -626,15 +626,32 @@ export const getDecisionSupport = async () => {
     getInventoryRestocks(),
   ]);
 
-  const orders = normalizeRows(ordersResult);
+  let orders = normalizeRows(ordersResult);
 
-  const payments = normalizeRows(paymentsResult);
+  let payments = normalizeRows(paymentsResult);
 
-  const inventoryItems = normalizeRows(inventoryItemsResult);
+  let inventoryItems = normalizeRows(inventoryItemsResult);
 
-  const usageLogs = normalizeRows(usageLogsResult);
+  let usageLogs = normalizeRows(usageLogsResult);
 
-  const restocks = normalizeRows(restocksResult);
+  let restocks = normalizeRows(restocksResult);
+
+  const inRange = (value) => {
+    if (!startDate && !endDate) return true;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return false;
+    if (startDate && date < new Date(`${startDate}T00:00:00`)) return false;
+    if (endDate && date > new Date(`${endDate}T23:59:59.999`)) return false;
+    return true;
+  };
+
+  orders = orders.filter((order) => (!branchId || String(order.branch_id) === String(branchId)) && inRange(order.created_at));
+  const orderIds = new Set(orders.map((order) => String(order.id)));
+  payments = payments.filter((payment) => (!branchId || orderIds.has(String(payment.order_id)) || String(payment.branch_id) === String(branchId)) && inRange(payment.payment_date ?? payment.created_at));
+  if (branchId) inventoryItems = inventoryItems.filter((item) => String(item.branch_id ?? item.branch) === String(branchId));
+  const inventoryIds = new Set(inventoryItems.map((item) => String(item.id)));
+  usageLogs = usageLogs.filter((log) => inventoryIds.has(String(log.item_id)) && inRange(log.logged_at ?? log.created_at));
+  restocks = restocks.filter((restock) => inventoryIds.has(String(restock.item_id)) && inRange(restock.restocked_at ?? restock.created_at));
 
   const revenueDataset = buildRevenueDataset(payments);
 

@@ -1,4 +1,4 @@
-import { Edit2, Trash2 } from "lucide-react";
+import { Eye, Edit2, Trash2, UserRound } from "lucide-react";
 import StatusTracker from "./StatusTracker";
 import TimeLeftDisplay from "./TimeLeftDisplay";
 
@@ -75,9 +75,9 @@ const OrdersTable = ({
   };
 
   return (
-    <div className="card" style={{ padding: 0 }}>
-      <div className="table-wrapper">
-        <table>
+    <div className="card orders-card">
+      <div className="table-wrapper orders-table-wrapper">
+        <table className="orders-table">
           <thead>
             <tr>
               <th>Order #</th>
@@ -98,39 +98,35 @@ const OrdersTable = ({
 
                 return (
                   <tr key={orderId ?? order.order_number ?? index}>
-                    <td
-                      style={{
-                        fontWeight: 600,
-                        color: "var(--text-primary)",
-                      }}
-                    >
-                      {order.order_number || "N/A"}
+                    <td>
+                      <span className="order-number">
+                        {order.order_number || "N/A"}
+                      </span>
                     </td>
 
                     <td>
-                      <div>
-                        <p
-                          style={{
-                            fontWeight: 500,
-                          }}
-                        >
-                          {order.customers?.name ||
-                            order.customer_name ||
-                            "Unknown Customer"}
-                        </p>
-
-                        <p
-                          style={{
-                            fontSize: 12,
-                            color: "var(--text-muted)",
-                          }}
-                        >
-                          {order.customers?.phone || order.customer_phone || ""}
-                        </p>
+                      <div className="order-customer">
+                        <span className="order-customer-avatar" aria-hidden="true">
+                          <UserRound size={16} />
+                        </span>
+                        <div>
+                          <strong>
+                            {order.customers?.name ||
+                              order.customer_name ||
+                              "Unknown Customer"}
+                          </strong>
+                          <span>
+                            {order.customers?.phone ||
+                              order.customer_phone ||
+                              "No phone number"}
+                          </span>
+                        </div>
                       </div>
                     </td>
 
-                    <td>{order.weight_kg || 0}kg</td>
+                    <td>
+                      <span className="order-weight">{order.weight_kg || 0}kg</span>
+                    </td>
 
                     <td>
                       <StatusTracker
@@ -149,13 +145,7 @@ const OrdersTable = ({
                       </span>
 
                       {order.payment_status !== "paid" && (
-                        <div
-                          style={{
-                            fontSize: 11,
-                            color: "var(--danger)",
-                            marginTop: 4,
-                          }}
-                        >
+                        <div className="order-balance">
                           Balance:{" "}
                           {formatCurrency(
                             Number(order.total_price || 0) -
@@ -165,12 +155,7 @@ const OrdersTable = ({
                       )}
                     </td>
 
-                    <td
-                      style={{
-                        fontWeight: 600,
-                        color: "var(--text-primary)",
-                      }}
-                    >
+                    <td className="order-amount">
                       {formatCurrency(order.total_price)}
                     </td>
 
@@ -185,20 +170,16 @@ const OrdersTable = ({
                     </td>
 
                     <td>
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: 4,
-                        }}
-                      >
+                      <div className="order-row-actions">
                         {onView && (
                           <button
                             type="button"
                             className="btn-icon"
                             title="View"
+                            aria-label="View order"
                             onClick={() => onView(order)}
                           >
-                            View
+                            <Eye size={16} aria-hidden="true" />
                           </button>
                         )}
 
@@ -207,6 +188,7 @@ const OrdersTable = ({
                             type="button"
                             className="btn-icon"
                             title="Edit"
+                            aria-label="Edit order"
                             onClick={() => onEdit(order)}
                           >
                             <Edit2 size={16} />
@@ -218,10 +200,9 @@ const OrdersTable = ({
                             type="button"
                             className="btn-icon"
                             title="Delete"
+                            aria-label="Delete order"
                             onClick={() => onDelete(order)}
-                            style={{
-                              color: "var(--danger)",
-                            }}
+                            style={{ color: "var(--orders-danger)" }}
                           >
                             <Trash2 size={16} />
                           </button>
@@ -233,8 +214,9 @@ const OrdersTable = ({
               })
             ) : (
               <tr>
-                <td colSpan={8} className="empty-state">
-                  <p>No orders found</p>
+                <td colSpan={8} className="empty-state orders-empty-state">
+                  <strong>No orders found</strong>
+                  <p>Try changing your search or status filter.</p>
                 </td>
               </tr>
             )}

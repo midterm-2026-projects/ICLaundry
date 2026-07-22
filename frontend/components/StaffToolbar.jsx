@@ -1,74 +1,28 @@
-import PropTypes from "prop-types";
+import { Plus, Search, SlidersHorizontal, X } from "lucide-react";
 
-const StaffToolbar = ({
-  search,
-  onSearchChange,
-  roleFilter,
-  onRoleFilterChange,
-  branchFilter,
-  onBranchFilterChange,
-  branches,
-  onAddStaff,
-}) => {
-  return (
-    <div className="flex flex-col gap-4 rounded-lg bg-white p-4 shadow md:flex-row md:items-center md:justify-between">
-      {/* Search */}
-      <div className="flex-1">
-        <input
-          type="text"
-          placeholder="Search staff..."
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full rounded-md border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
-        />
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        <select
-          value={roleFilter}
-          onChange={(e) => onRoleFilterChange(e.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-2"
-        >
-          <option value="">All Roles</option>
-          <option value="admin">Admin</option>
-          <option value="staff">Staff</option>
-        </select>
-
-        <select
-          value={branchFilter}
-          onChange={(e) => onBranchFilterChange(e.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-2"
-        >
-          <option value="">All Branches</option>
-
-          {branches.map((branch) => (
-            <option key={branch.id} value={branch.id}>
-              {branch.branch_name}
-            </option>
-          ))}
-        </select>
-
-        <button
-          onClick={onAddStaff}
-          className="rounded-md bg-blue-600 px-5 py-2 font-medium text-white transition hover:bg-blue-700"
-        >
-          Add Staff
-        </button>
-      </div>
-    </div>
-  );
-};
-
-StaffToolbar.propTypes = {
-  search: PropTypes.string.isRequired,
-  onSearchChange: PropTypes.func.isRequired,
-  roleFilter: PropTypes.string.isRequired,
-  onRoleFilterChange: PropTypes.func.isRequired,
-  branchFilter: PropTypes.string.isRequired,
-  onBranchFilterChange: PropTypes.func.isRequired,
-  branches: PropTypes.array.isRequired,
-  onAddStaff: PropTypes.func.isRequired,
-};
+const StaffToolbar = ({ search, onSearchChange, roleFilter, onRoleFilterChange, branchFilter, onBranchFilterChange, branches = [], onAddStaff, onClear }) => (
+  <section className="staff-toolbar" aria-label="Staff filters">
+    <label className="staff-search">
+      <Search size={17} aria-hidden="true" />
+      <span className="sr-only">Search staff</span>
+      <input aria-label="Search staff" type="search" placeholder="Search by name, email, phone, or position..." value={search} onChange={(event) => onSearchChange(event.target.value)} />
+    </label>
+    <label className="staff-filter">
+      <SlidersHorizontal size={16} aria-hidden="true" /><span className="sr-only">Role</span>
+      <select aria-label="Role" value={roleFilter} onChange={(event) => onRoleFilterChange(event.target.value)}>
+        <option value="">All Roles</option><option value="admin">Admin</option><option value="staff">Staff</option>
+      </select>
+    </label>
+    <label className="staff-filter">
+      <span className="sr-only">Branch</span>
+      <select aria-label="Branch" value={branchFilter} onChange={(event) => onBranchFilterChange(event.target.value)}>
+        <option value="">All Branches</option>
+        {branches.map((branch) => <option key={branch.id} value={String(branch.id)}>{branch.branch_name}</option>)}
+      </select>
+    </label>
+    {(search || roleFilter || branchFilter) && <button type="button" className="staff-clear" onClick={onClear}><X size={15} /> Clear</button>}
+    <button type="button" className="btn btn-primary staff-add-mobile" onClick={onAddStaff}><Plus size={17} /> Add Staff</button>
+  </section>
+);
 
 export default StaffToolbar;

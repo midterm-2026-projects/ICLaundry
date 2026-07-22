@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Search } from "lucide-react";
 
 const CustomerSearch = ({
   value = "",
@@ -22,28 +23,17 @@ const CustomerSearch = ({
   };
 
   return (
-    <div className="flex w-full max-w-sm items-center">
+    <div className="customer-search-box">
+      <Search size={18} aria-hidden="true" />
+      <label htmlFor="searchCustomers" className="sr-only">
+        Search customers
+      </label>
       <input
         id="searchCustomers"
         type="text"
         value={searchValue}
         onChange={handleChange}
         placeholder={placeholder}
-        className="
-          w-full
-          rounded-lg
-          border
-          border-gray-300
-          bg-white
-          px-4
-          py-2
-          text-sm
-          outline-none
-          transition
-          focus:border-blue-500
-          focus:ring-2
-          focus:ring-blue-200
-        "
       />
     </div>
   );

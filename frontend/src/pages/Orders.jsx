@@ -268,6 +268,21 @@ const Orders = () => {
           />
         </div>
 
+        <div className="orders-results-summary">
+          <span className="orders-count">
+            {filteredOrders.length} order
+            {filteredOrders.length === 1 ? "" : "s"}
+          </span>
+
+          <span className="orders-active-filter">
+            {selectedStatus === "all"
+              ? "All statuses"
+              : selectedStatus.replace(/\b\w/g, (letter) =>
+                  letter.toUpperCase(),
+                )}
+          </span>
+        </div>
+
         {error && <p className="orders-error">{error}</p>}
 
         <OrdersTable

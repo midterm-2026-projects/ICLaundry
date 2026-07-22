@@ -13,12 +13,13 @@ import { getDashboardAnalytics } from "../services/AnalyticsService.js";
  */
 export const getDashboardAnalyticsController = async (req, res) => {
   try {
-    const { startDate, endDate, branchId } = req.query;
+    const { startDate, endDate, branchId, period } = req.query;
 
     const analytics = await getDashboardAnalytics({
       startDate,
       endDate,
       branchId,
+      period,
     });
 
     return res.status(200).json({
