@@ -10,7 +10,8 @@ it("renders weekly order values as an accessible bar chart", () => {
 
 it("renders revenue analytics as an accessible line chart", () => {
   render(<RevenueTrendChart data={[{ id: "mon", label: "Mon", value: 750 }, { id: "tue", label: "Tue", value: 1250 }]} />);
-  expect(screen.getByRole("region", { name: "Weekly Revenue Trend" })).toHaveTextContent("₱2K");
+  const region = screen.getByRole("region", { name: "Weekly Revenue Trend" });
+  expect(region).toHaveTextContent("₱2K");
   expect(screen.getByRole("img", { name: "Weekly revenue line chart" })).toBeInTheDocument();
 });
 
