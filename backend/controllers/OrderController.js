@@ -1,6 +1,10 @@
+// backend/controllers/OrderController.js
+
 import {
+  createOrderService,
   readOrders,
   editOrder,
+  deleteOrderService,
   updateOrderStatusService,
 } from "../services/OrderService.js";
 
@@ -51,12 +55,49 @@ export const getOrderByIdController = async (req, res) => {
 };
 
 /**
+ * Create Order
+ */
+export const createOrderController = async (req, res) => {
+  try {
+    const order = await createOrderService(req.body);
+
+    return res.status(201).json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+/**
  * Update Order
- * General order update
  */
 export const updateOrderController = async (req, res) => {
   try {
-    const result = await editOrder(req.params.id, req.body);
+    const updatedOrder = await editOrder(req.params.id, req.body);
+
+    return res.status(200).json({
+      success: true,
+      data: updatedOrder,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+/**
+ * Delete Order
+ */
+export const deleteOrderController = async (req, res) => {
+  try {
+    const result = await deleteOrderService(req.params.id);
 
     return res.status(200).json({
       success: true,
@@ -73,7 +114,6 @@ export const updateOrderController = async (req, res) => {
 /**
  * ==============================================
  * ORDER STATUS MANAGEMENT
- * Handles updating order progress.
  * ==============================================
  */
 

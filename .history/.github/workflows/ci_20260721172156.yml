@@ -1,0 +1,201 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ─────────────────────────────────────────────
+  # 1. BACKEND
+  # ─────────────────────────────────────────────
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run backend tests
+        run: npm test
+        env:
+          NODE_ENV: test
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+      - name: Upload backend coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage
+          if-no-files-found: ignore
+          retention-days: 7
+  # ─────────────────────────────────────────────
+  # 2. FRONTEND
+  # ─────────────────────────────────────────────
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run frontend unit tests
+        run: npm run test:unit
+
+      - name: Build frontend
+        run: npm run build
+  # ─────────────────────────────────────────────
+  # 3. E2E Tests
+  # ─────────────────────────────────────────────
+  # ─────────────────────────────────────────────
+  # 3. PLAYWRIGHT E2E TESTS
+  # ─────────────────────────────────────────────
+
+  playwright-e2e:
+    name: Playwright E2E
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 20
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ------------------------------
+      # Node
+      # ------------------------------
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            backend/package-lock.json
+
+      # ------------------------------
+      # Install frontend
+      # ------------------------------
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      # ------------------------------
+      # Install backend
+      # ------------------------------
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      # ------------------------------
+      # Install playwright
+      # ------------------------------
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      # ------------------------------
+      # Start backend
+      # ------------------------------
+
+      - name: Start backend server
+        working-directory: backend
+        run: |
+          npm run dev &
+          sleep 10
+        env:
+          NODE_ENV: test
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+      # ------------------------------
+      # Start frontend
+      # ------------------------------
+
+      - name: Start frontend server
+        run: |
+          npm run dev -- --host 0.0.0.0 &
+          sleep 10
+
+      # ------------------------------
+      # Check frontend
+      # ------------------------------
+
+      - name: Check application availability
+        run: |
+          curl http://localhost:5173
+
+      # ------------------------------
+      # Run Playwright
+      # ------------------------------
+
+      - name: Run Playwright E2E
+        run: npm run test:e2e
+        env:
+          CI: true
+
+      # ------------------------------
+      # Upload reports
+      # ------------------------------
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
+          retention-days: 7
+
+      - name: Upload screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-screenshots
+          path: frontend/test-results
+          retention-days: 7

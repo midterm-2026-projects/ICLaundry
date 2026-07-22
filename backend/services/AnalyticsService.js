@@ -1,176 +1,61 @@
-// backend/services/AnalyticsService.js
-
 import { getOrders } from "../models/OrderModel.js";
-
 import { getPayments } from "../models/PaymentModel.js";
+import { getInventoryRestocks } from "../models/InventoryModel.js";
 
-/**
- * ==============================================
- * ANALYTICS SERVICE
- * Handles dashboard business logic.
- * ==============================================
- */
+const toNumber = (value) => Number.isFinite(Number(value)) ? Number(value) : 0;
 
-/**
- * Filter records by date range
- */
-const filterByDateRange = (
-  records,
-  startDate,
-  endDate,
-  dateField = "created_at",
-) => {
-  if (!startDate && !endDate) {
-    return records;
-  }
+const dateWithinRange = (value, startDate, endDate) => {
+  if (!startDate && !endDate) return true;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return false;
+  if (startDate && date < new Date(`${startDate}T00:00:00`)) return false;
+  if (endDate && date > new Date(`${endDate}T23:59:59.999`)) return false;
+  return true;
+};
 
-  return records.filter((record) => {
-    const recordDate = new Date(record[dateField]);
+const periodKey = (value, period) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  if (period === "yearly") return String(date.getFullYear());
+  if (period === "weekly") return date.toISOString().slice(0, 10);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+};
 
-    if (startDate && recordDate < new Date(startDate)) {
-      return false;
-    }
+const periodLabel = (key, period) => {
+  if (period === "yearly") return key;
+  if (period === "weekly") return new Date(`${key}T00:00:00`).toLocaleDateString("en-PH", { weekday: "short", month: "short", day: "numeric" });
+  const [year, month] = key.split("-");
+  return new Date(Number(year), Number(month) - 1).toLocaleDateString("en-PH", { month: "short", year: "numeric" });
+};
 
-    if (endDate && recordDate > new Date(endDate)) {
-      return false;
-    }
-
-    return true;
+const aggregateDataset = (records, { dateField, value, period }) => {
+  const totals = new Map();
+  records.forEach((record) => {
+    const key = periodKey(record[dateField], period);
+    if (key) totals.set(key, (totals.get(key) || 0) + value(record));
   });
+  return [...totals.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([key, amount]) => ({ id: key, label: periodLabel(key, period), value: Number(amount.toFixed(2)) }));
 };
 
-/**
- * Filter by branch
- */
-const filterByBranch = (records, branchId) => {
-  if (!branchId) {
-    return records;
-  }
+export const getDashboardAnalytics = async ({ startDate = "", endDate = "", branchId = "", period = "monthly" } = {}) => {
+  if (startDate && endDate && new Date(startDate) > new Date(endDate)) throw new Error("Start date cannot be after end date");
+  if (!["weekly", "monthly", "yearly"].includes(period)) throw new Error("Period must be weekly, monthly, or yearly");
 
-  return records.filter((record) => record.branch_id === branchId);
-};
+  const [allOrders, allPayments, allRestocks] = await Promise.all([getOrders(), getPayments(), getInventoryRestocks()]);
+  const orders = (allOrders || []).filter((order) => (!branchId || String(order.branch_id) === String(branchId)) && dateWithinRange(order.created_at, startDate, endDate));
+  const eligibleOrderIds = new Set(orders.map((order) => String(order.id)));
+  const payments = (allPayments || []).filter((payment) => (!branchId || eligibleOrderIds.has(String(payment.order_id)) || String(payment.branch_id) === String(branchId)) && dateWithinRange(payment.payment_date ?? payment.created_at, startDate, endDate));
+  const expenses = (allRestocks || []).filter((restock) => dateWithinRange(restock.restocked_at ?? restock.created_at, startDate, endDate)).map((restock) => ({ ...restock, expense: toNumber(restock.quantity_added) * toNumber(restock.inventory_items?.cost_per_unit) }));
 
-/**
- * ==============================================
- * KPI CALCULATIONS
- * ==============================================
- */
-
-const calculateRevenue = (payments) => {
-  return payments.reduce(
-    (total, payment) => total + Number(payment.amount || 0),
-
-    0,
-  );
-};
-
-const calculateExpenses = (expenses) => {
-  return expenses.reduce(
-    (total, expense) =>
-      total + Number(expense.total_cost ?? expense.amount ?? 0),
-
-    0,
-  );
-};
-
-const calculateNetProfit = (revenue, expenses) => {
-  return revenue - expenses;
-};
-
-const calculateTotalOrders = (orders) => {
-  return orders.length;
-};
-
-/**
- * ==============================================
- * DATASET GENERATION
- * ==============================================
- */
-
-const generateRevenueDataset = (payments) => {
-  return payments.map((payment) => ({
-    id: payment.id,
-
-    label: payment.payment_date ?? payment.created_at,
-
-    value: Number(payment.amount || 0),
-  }));
-};
-
-const generateExpenseDataset = (expenses) => {
-  return expenses.map((expense) => ({
-    id: expense.id,
-
-    label: expense.created_at ?? expense.payment_date,
-
-    value: Number(expense.total_cost ?? expense.amount ?? 0),
-  }));
-};
-
-/**
- * ==============================================
- * DASHBOARD ANALYTICS
- * ==============================================
- */
-
-export const getDashboardAnalytics = async ({
-  startDate = "",
-  endDate = "",
-  branchId = "",
-} = {}) => {
-  let orders = await getOrders();
-
-  let payments = await getPayments();
-
-  /**
-   * Expenses are currently unavailable.
-   * Future expense module can be connected here.
-   */
-  let expenses = [];
-
-  /**
-   * Date filtering
-   */
-
-  orders = filterByDateRange(orders, startDate, endDate, "created_at");
-
-  payments = filterByDateRange(payments, startDate, endDate, "payment_date");
-
-  /**
-   * Branch filtering
-   */
-
-  orders = filterByBranch(orders, branchId);
-
-  payments = filterByBranch(payments, branchId);
-
-  /**
-   * Calculate dashboard values
-   */
-
-  const totalRevenue = calculateRevenue(payments);
-
-  const totalExpenses = calculateExpenses(expenses);
-
-  const netProfit = calculateNetProfit(totalRevenue, totalExpenses);
-
-  const totalOrders = calculateTotalOrders(orders);
+  const totalRevenue = payments.reduce((sum, payment) => sum + toNumber(payment.amount), 0);
+  const totalExpenses = expenses.reduce((sum, expense) => sum + expense.expense, 0);
 
   return {
-    totalRevenue,
-
-    totalExpenses,
-
-    netProfit,
-
-    totalOrders,
-
-    revenueDataset: generateRevenueDataset(payments),
-
-    expenseDataset: generateExpenseDataset(expenses),
+    totalRevenue: Number(totalRevenue.toFixed(2)), totalExpenses: Number(totalExpenses.toFixed(2)),
+    netProfit: Number((totalRevenue - totalExpenses).toFixed(2)), totalOrders: orders.length, period,
+    revenueDataset: aggregateDataset(payments, { dateField: "payment_date", value: (item) => toNumber(item.amount), period }),
+    expenseDataset: aggregateDataset(expenses, { dateField: "restocked_at", value: (item) => item.expense, period }),
   };
 };
 
-export default {
-  getDashboardAnalytics,
-};
+export default { getDashboardAnalytics };

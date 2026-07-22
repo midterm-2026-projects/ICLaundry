@@ -1,82 +1,120 @@
+// frontend/src/components/PaymentSection.jsx
+
 import { useState } from "react";
 
 const PaymentSection = ({
-  paymentStatus,
-  onAmountChange,
-  onMethodChange,
+  orderId,
+  paymentStatus = "unpaid",
+  amountPaid = 0,
+  remainingBalance = 0,
+  onSubmitPayment,
 }) => {
-  const [amountPaid, setAmountPaid] =
-    useState("");
+  const [amount, setAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("");
+  const [error, setError] = useState("");
 
-  const [paymentMethod, setPaymentMethod] =
-    useState("");
+  const handleSubmit = () => {
+    setError("");
 
-  const handleAmountChange = (e) => {
-    const value = e.target.value;
+    const paymentAmount = Number(amount);
 
-    setAmountPaid(value);
-
-    if (onAmountChange) {
-      onAmountChange(value);
+    if (!paymentAmount || paymentAmount <= 0) {
+      setError("Enter a valid payment amount.");
+      return;
     }
-  };
 
-  const handleMethodChange = (e) => {
-    const value = e.target.value;
-
-    setPaymentMethod(value);
-
-    if (onMethodChange) {
-      onMethodChange(value);
+    if (!paymentMethod) {
+      setError("Select payment method.");
+      return;
     }
+
+    /**
+     * Prevent over payment
+     */
+    if (remainingBalance > 0 && paymentAmount > remainingBalance) {
+      setError(
+        `Payment cannot exceed remaining balance of ₱${remainingBalance.toFixed(2)}`,
+      );
+      return;
+    }
+
+    if (onSubmitPayment) {
+      onSubmitPayment({
+        order_id: orderId,
+        amount: paymentAmount,
+        payment_method: paymentMethod,
+      });
+    }
+
+    setAmount("");
+    setPaymentMethod("");
   };
 
   return (
-    <>
-      <h2>Payment</h2>
+    <div className="order-section">
+      <div className="order-section-title">Payment</div>
 
-      <label htmlFor="amountPaid">
-        Amount Paid
-      </label>
+      <div className="pricing-card" style={{ marginBottom: 16 }}>
+        <div className="pricing-row">
+          <span>Payment Status</span>
+          <span className={`badge badge-${paymentStatus}`}>{paymentStatus}</span>
+        </div>
 
-      <input
-        id="amountPaid"
-        type="number"
-        value={amountPaid}
-        placeholder="Enter amount paid"
-        onChange={handleAmountChange}
-      />
+        <div className="pricing-row">
+          <span>Amount Paid</span>
+          <span>₱{Number(amountPaid || 0).toFixed(2)}</span>
+        </div>
 
-      <label htmlFor="paymentMethod">
-        Payment Method
-      </label>
+        <div className="pricing-total">
+          <span>Remaining Balance</span>
+          <span>₱{Number(remainingBalance || 0).toFixed(2)}</span>
+        </div>
+      </div>
 
-      <select
-        id="paymentMethod"
-        value={paymentMethod}
-        onChange={handleMethodChange}
+      {error && (
+        <div className="form-group">
+          <span style={{ color: "var(--danger)", fontSize: 13 }}>{error}</span>
+        </div>
+      )}
+
+      <div className="form-row">
+        <div className="form-group">
+          <label>Payment Amount</label>
+          <input
+            className="form-control"
+            type="number"
+            min="1"
+            value={amount}
+            onChange={(event) => setAmount(event.target.value)}
+            placeholder="Enter amount"
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Payment Method</label>
+          <select
+            className="form-control"
+            value={paymentMethod}
+            onChange={(event) => setPaymentMethod(event.target.value)}
+          >
+            <option value="">Select Method</option>
+            <option value="cash">Cash</option>
+            <option value="gcash">GCash</option>
+            <option value="bank_transfer">Bank Transfer</option>
+            <option value="card">Card</option>
+          </select>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        className="btn btn-primary"
+        onClick={handleSubmit}
+        style={{ width: "100%" }}
       >
-        <option value="">
-          Select Payment Method
-        </option>
-
-        <option value="Cash">
-          Cash
-        </option>
-
-        <option value="GCash">
-          GCash
-        </option>
-
-        <option value="Maya">
-          Maya
-        </option>
-      </select>
-
-      <h3>Payment Status</h3>
-
-      <span>{paymentStatus}</span>
-    </>
+        Submit Payment
+      </button>
+    </div>
   );
 };
 

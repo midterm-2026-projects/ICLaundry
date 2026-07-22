@@ -1,169 +1,274 @@
-import {
-  fireEvent,
-  render,
-  screen,
-} from "@testing-library/react";
+// frontend/test/components/CustomerModal.test.jsx
 
-import {
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { render, screen } from "@testing-library/react";
 
-import CustomerModal from "../components/CustomerModal.jsx";
+import userEvent from "@testing-library/user-event";
+
+import { describe, expect, it, vi } from "vitest";
+
+import CustomerModal from "../components/CustomerModal";
 
 describe("CustomerModal", () => {
-  it("Should display Full Name, Phone Number, Email, and Notes fields inside the modal", () => {
+  /**
+   * ==============================================
+   * ADD CUSTOMER
+   * ==============================================
+   */
+
+  it("should display Add Customer heading", () => {
     render(
-      <CustomerModal editing={false} />
+      <CustomerModal
+        customer={null}
+        isEditing={false}
+        onSubmit={vi.fn()}
+        onClose={vi.fn()}
+      />,
     );
 
     expect(
-      screen.getByLabelText("Full Name")
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByLabelText("Phone Number")
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByLabelText("Email")
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByLabelText("Notes")
+      screen.getByRole("heading", {
+        name: /add customer/i,
+      }),
     ).toBeInTheDocument();
   });
 
-  it("Should pass customer data when Add Customer button is clicked", () => {
-    const onAddCustomer = vi.fn();
+  it("should display empty form fields", () => {
+    render(
+      <CustomerModal
+        customer={null}
+        isEditing={false}
+        onSubmit={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByLabelText(/customer name/i)).toHaveValue("");
+
+    expect(screen.getByLabelText(/phone number/i)).toHaveValue("");
+
+    expect(screen.getByLabelText(/email/i)).toHaveValue("");
+
+    expect(screen.getByLabelText(/address/i)).toHaveValue("");
+
+    expect(screen.getByLabelText(/notes/i)).toHaveValue("");
+  });
+
+  /**
+   * ==============================================
+   * EDIT CUSTOMER
+   * ==============================================
+   */
+
+  it("should populate customer information when editing", () => {
+    render(
+      <CustomerModal
+        isEditing
+        customer={{
+          id: "1",
+          name: "Juan Dela Cruz",
+          phone: "09123456789",
+          email: "juan@gmail.com",
+          address: "Batangas",
+          notes: "Regular Customer",
+        }}
+        onSubmit={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", {
+        name: /edit customer/i,
+      }),
+    ).toBeInTheDocument();
+
+    expect(screen.getByLabelText(/customer name/i)).toHaveValue(
+      "Juan Dela Cruz",
+    );
+
+    expect(screen.getByLabelText(/phone number/i)).toHaveValue("09123456789");
+
+    expect(screen.getByLabelText(/email/i)).toHaveValue("juan@gmail.com");
+
+    expect(screen.getByLabelText(/address/i)).toHaveValue("Batangas");
+
+    expect(screen.getByLabelText(/notes/i)).toHaveValue("Regular Customer");
+  });
+
+  /**
+   * ==============================================
+   * SUBMIT
+   * ==============================================
+   */
+
+  it("should submit customer information", async () => {
+    const user = userEvent.setup();
+
+    const handleSubmit = vi.fn();
 
     render(
       <CustomerModal
-        editing={false}
-        onAddCustomer={onAddCustomer}
-      />
+        customer={null}
+        isEditing={false}
+        onSubmit={handleSubmit}
+        onClose={vi.fn()}
+      />,
     );
 
-    fireEvent.change(
-      screen.getByLabelText("Full Name"),
-      {
-        target: {
-          value: "Juan Dela Cruz",
-        },
-      }
-    );
+    await user.type(screen.getByLabelText(/customer name/i), "Juan Dela Cruz");
 
-    fireEvent.change(
-      screen.getByLabelText("Phone Number"),
-      {
-        target: {
-          value: "09171234567",
-        },
-      }
-    );
+    await user.type(screen.getByLabelText(/phone number/i), "09123456789");
 
-    fireEvent.change(
-      screen.getByLabelText("Email"),
-      {
-        target: {
-          value: "juan@gmail.com",
-        },
-      }
-    );
+    await user.type(screen.getByLabelText(/email/i), "juan@gmail.com");
 
-    fireEvent.change(
-      screen.getByLabelText("Notes"),
-      {
-        target: {
-          value: "VIP Customer",
-        },
-      }
-    );
+    await user.type(screen.getByLabelText(/address/i), "Batangas");
 
-    fireEvent.click(
+    await user.type(screen.getByLabelText(/notes/i), "Regular Customer");
+
+    await user.click(
       screen.getByRole("button", {
-        name: "Add Customer",
-      })
+        name: /create customer/i,
+      }),
     );
 
-    expect(onAddCustomer)
-      .toHaveBeenCalledWith({
-        fullName: "Juan Dela Cruz",
-        phone: "09171234567",
-        email: "juan@gmail.com",
-        notes: "VIP Customer",
-      });
+    expect(handleSubmit).toHaveBeenCalledWith({
+      name: "Juan Dela Cruz",
+      phone: "09123456789",
+      email: "juan@gmail.com",
+      address: "Batangas",
+      notes: "Regular Customer",
+    });
   });
 
-  it("Should pass customer data when Update button is clicked", () => {
-    const onUpdate = vi.fn();
+  /**
+   * ==============================================
+   * VALIDATION
+   * ==============================================
+   */
+
+  it("should require customer name", async () => {
+    const user = userEvent.setup();
+
+    window.alert = vi.fn();
 
     render(
       <CustomerModal
-        editing
-        onUpdate={onUpdate}
-      />
+        customer={null}
+        isEditing={false}
+        onSubmit={vi.fn()}
+        onClose={vi.fn()}
+      />,
     );
 
-    fireEvent.change(
-      screen.getByLabelText("Full Name"),
-      {
-        target: {
-          value: "Updated Name",
-        },
-      }
-    );
+    await user.type(screen.getByLabelText(/phone number/i), "09123456789");
 
-    fireEvent.change(
-      screen.getByLabelText("Phone Number"),
-      {
-        target: {
-          value: "09999999999",
-        },
-      }
-    );
-
-    fireEvent.change(
-      screen.getByLabelText("Email"),
-      {
-        target: {
-          value: "updated@gmail.com",
-        },
-      }
-    );
-
-    fireEvent.click(
+    await user.click(
       screen.getByRole("button", {
-        name: "Update",
-      })
+        name: /create customer/i,
+      }),
     );
 
-    expect(onUpdate)
-      .toHaveBeenCalledWith({
-        fullName: "Updated Name",
-        phone: "09999999999",
-        email: "updated@gmail.com",
-        notes: "",
-      });
+    expect(window.alert).toHaveBeenCalledWith("Customer name is required.");
   });
 
-  it("Should prevent submission when required fields are empty", () => {
+  it("should require phone number", async () => {
+    const user = userEvent.setup();
+
+    window.alert = vi.fn();
+
     render(
-      <CustomerModal editing={false} />
+      <CustomerModal
+        customer={null}
+        isEditing={false}
+        onSubmit={vi.fn()}
+        onClose={vi.fn()}
+      />,
     );
 
-    fireEvent.click(
+    await user.type(screen.getByLabelText(/customer name/i), "Juan");
+
+    await user.click(
       screen.getByRole("button", {
-        name: "Add Customer",
-      })
+        name: /create customer/i,
+      }),
+    );
+
+    expect(window.alert).toHaveBeenCalledWith("Phone number is required.");
+  });
+
+  /**
+   * ==============================================
+   * CANCEL
+   * ==============================================
+   */
+
+  it("should call onClose when Cancel button is clicked", async () => {
+    const user = userEvent.setup();
+
+    const handleClose = vi.fn();
+
+    render(
+      <CustomerModal
+        customer={null}
+        isEditing={false}
+        onSubmit={vi.fn()}
+        onClose={handleClose}
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /cancel/i,
+      }),
+    );
+
+    expect(handleClose).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * ==============================================
+   * BUTTON LABELS
+   * ==============================================
+   */
+
+  it("should display Create Customer button in add mode", () => {
+    render(
+      <CustomerModal
+        customer={null}
+        isEditing={false}
+        onSubmit={vi.fn()}
+        onClose={vi.fn()}
+      />,
     );
 
     expect(
-      screen.getByText(
-        "Full Name, Phone Number, and Email are required."
-      )
+      screen.getByRole("button", {
+        name: /create customer/i,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("should display Update Customer button in edit mode", () => {
+    render(
+      <CustomerModal
+        customer={{
+          id: "1",
+          name: "Juan",
+          phone: "09123456789",
+          email: "juan@gmail.com",
+          address: "",
+          notes: "",
+        }}
+        isEditing
+        onSubmit={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", {
+        name: /update customer/i,
+      }),
     ).toBeInTheDocument();
   });
 });

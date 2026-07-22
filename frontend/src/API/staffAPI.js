@@ -1,4 +1,12 @@
-const BASE_URL = "http://localhost:3000/api/staff";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+const BASE_URL = `${API_BASE_URL}/staff`;
+
+const request = async (url, options) => {
+  const response = await fetch(url, options);
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.message || "Staff request failed.");
+  return result.data;
+};
 
 /**
  * ==============================================
@@ -7,31 +15,15 @@ const BASE_URL = "http://localhost:3000/api/staff";
  */
 
 export const getStaff = async () => {
-  const response = await fetch(BASE_URL);
-
-  if (!response.ok) {
-    throw new Error("Failed to retrieve staff.");
-  }
-
-  const result = await response.json();
-
-  return result.data;
+  return request(BASE_URL);
 };
 
 export const getStaffById = async (id) => {
-  const response = await fetch(`${BASE_URL}/${id}`);
-
-  if (!response.ok) {
-    throw new Error("Failed to retrieve staff.");
-  }
-
-  const result = await response.json();
-
-  return result.data;
+  return request(`${BASE_URL}/${id}`);
 };
 
 export const createStaff = async (staff) => {
-  const response = await fetch(BASE_URL, {
+  return request(BASE_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -39,17 +31,10 @@ export const createStaff = async (staff) => {
     body: JSON.stringify(staff),
   });
 
-  const result = await response.json();
-
-  if (!response.ok) {
-    throw new Error(result.message);
-  }
-
-  return result.data;
 };
 
 export const updateStaff = async (id, staff) => {
-  const response = await fetch(`${BASE_URL}/${id}`, {
+  return request(`${BASE_URL}/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -57,25 +42,12 @@ export const updateStaff = async (id, staff) => {
     body: JSON.stringify(staff),
   });
 
-  const result = await response.json();
-
-  if (!response.ok) {
-    throw new Error(result.message);
-  }
-
-  return result.data;
 };
 
 export const deleteStaff = async (id) => {
-  const response = await fetch(`${BASE_URL}/${id}`, {
+  await request(`${BASE_URL}/${id}`, {
     method: "DELETE",
   });
-
-  const result = await response.json();
-
-  if (!response.ok) {
-    throw new Error(result.message);
-  }
 
   return true;
 };

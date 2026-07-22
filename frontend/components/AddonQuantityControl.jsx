@@ -7,6 +7,7 @@ const AddonQuantityControl = ({
   return (
     <>
       <button
+        type="button"
         onClick={onDecrease}
         disabled={quantity === 0}
       >
@@ -16,6 +17,7 @@ const AddonQuantityControl = ({
       <span>{quantity}</span>
 
       <button
+        type="button"
         onClick={onIncrease}
         disabled={
           quantity >= maxStock

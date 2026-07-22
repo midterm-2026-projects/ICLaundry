@@ -1,41 +1,16 @@
-export default function CustomerActions({
-  setShowModal,
-  setEditing,
-  onDelete,
-}) {
-  const handleAddCustomer = () => {
-    setEditing(false);
-    setShowModal(true);
-  };
+import { Plus } from "lucide-react";
 
-  const handleEditCustomer = () => {
-    setEditing(true);
-    setShowModal(true);
-  };
-
-  const handleDeleteCustomer = () => {
-    onDelete?.();
-  };
-
+const CustomerActions = ({ onAddCustomer }) => {
   return (
-    <>
-      <button
-        onClick={handleAddCustomer}
-      >
-        Add Customer
-      </button>
-
-      <button
-        onClick={handleEditCustomer}
-      >
-        Edit Customer
-      </button>
-
-      <button
-        onClick={handleDeleteCustomer}
-      >
-        Delete
-      </button>
-    </>
+    <button
+      type="button"
+      onClick={onAddCustomer}
+      className="btn btn-primary customer-add-button"
+    >
+      <Plus size={18} aria-hidden="true" />
+      Add Customer
+    </button>
   );
-}
+};
+
+export default CustomerActions;

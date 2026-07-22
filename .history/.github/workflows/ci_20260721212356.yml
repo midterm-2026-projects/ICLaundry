@@ -1,0 +1,220 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - "**"
+
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci
+
+      - name: Run backend tests
+        run: npm test
+        env:
+          CI: true
+          NODE_ENV: test
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Run frontend tests
+        run: npm run test:unit
+        env:
+          CI: true
+
+      - name: Build frontend
+        run: npm run build
+        env:
+          VITE_API_URL: http://127.0.0.1:5000/api
+
+  playwright-e2e:
+    name: Playwright E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      CI: true
+      NODE_ENV: test
+
+      PORT: 5000
+
+      PLAYWRIGHT_BASE_URL: http://127.0.0.1:5173
+      VITE_API_URL: http://127.0.0.1:5000/api
+
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            backend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Start backend
+        working-directory: backend
+        run: |
+          npm start > backend.log 2>&1 &
+          echo $! > backend.pid
+
+      - name: Wait for backend
+        working-directory: frontend
+        run: |
+          npx wait-on tcp:127.0.0.1:5000 --timeout 120000
+
+      - name: Verify backend process
+        working-directory: backend
+        run: |
+          echo "Backend PID:"
+          cat backend.pid
+
+          if ! kill -0 "$(cat backend.pid)" 2>/dev/null; then
+            echo "Backend stopped unexpectedly."
+            echo "===== BACKEND LOG ====="
+            cat backend.log || true
+            exit 1
+          fi
+
+          echo "Backend is running."
+          echo "===== BACKEND STARTUP LOG ====="
+          cat backend.log || true
+
+      - name: List Playwright tests
+        working-directory: frontend
+        run: npx playwright test --list
+
+      - name: Run Playwright E2E
+        working-directory: frontend
+        run: npm run test:e2e
+
+      - name: Show backend logs
+        if: always()
+        working-directory: backend
+        run: |
+          echo "===== BACKEND LOG ====="
+          cat backend.log || true
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload Playwright test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: frontend/test-results
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload backend logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-backend-logs
+          path: backend/backend.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+  ci-success:
+    name: CI Passed
+    runs-on: ubuntu-latest
+    if: always()
+
+    needs:
+      - backend-tests
+      - frontend-tests
+      - playwright-e2e
+
+    steps:
+      - name: Check job results
+        run: |
+          if [ "${{ needs.backend-tests.result }}" != "success" ] || \
+             [ "${{ needs.frontend-tests.result }}" != "success" ] || \
+             [ "${{ needs.playwright-e2e.result }}" != "success" ]; then
+            echo "One or more CI jobs failed."
+            exit 1
+          fi
+
+          echo "All CI jobs passed."

@@ -1,15 +1,27 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { AlertTriangle, BarChart3, Boxes, Clock3, PhilippinePeso, RefreshCw, ShoppingBag, UserRound } from "lucide-react";
 import { Link } from "react-router-dom";
+import { getOrders } from "../API/orderAPI";
+import { getCustomers } from "../API/customerAPI";
+import { fetchInventoryItems } from "../API/inventoryAPI";
+import { getStaff } from "../API/staffAPI";
+import { getDashboardAnalytics } from "../API/analyticsAPI";
+import { RevenueTrendChart, WeeklyOrdersChart } from "../../components/DashboardCharts";
 
-const Dashboard = () => {
-  return (
-    <>
-      <h1>Dashboard</h1>
-
-      <Link to="/orders">
-        <button>Orders</button>
-      </Link>
-    </>
-  );
-};
-
-export default Dashboard;
+const money = (value) => new Intl.NumberFormat("en-PH",{style:"currency",currency:"PHP",maximumFractionDigits:0}).format(Number(value)||0);
+const localDateKey = (value) => { const date=value instanceof Date?value:new Date(value); if(Number.isNaN(date.getTime()))return ""; return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`; };
+export default function Dashboard() {
+  const [data,setData]=useState({orders:[],customers:[],inventory:[],staff:[],analytics:{}}); const [loading,setLoading]=useState(true); const [error,setError]=useState(""); const [updatedAt,setUpdatedAt]=useState(null);
+  const refresh=useCallback(async()=>{try{setError("");const [orders,customers,inventory,staff,analytics]=await Promise.all([getOrders(),getCustomers(),fetchInventoryItems(),getStaff(),getDashboardAnalytics({period:"weekly"})]);setData({orders,customers,inventory,staff,analytics});setUpdatedAt(new Date());}catch(requestError){setError(requestError.message||"Unable to refresh dashboard.");}finally{setLoading(false);}},[]);
+  useEffect(()=>{refresh();const timer=setInterval(refresh,15000);const visible=()=>{if(document.visibilityState==="visible")refresh();};document.addEventListener("visibilitychange",visible);return()=>{clearInterval(timer);document.removeEventListener("visibilitychange",visible);};},[refresh]);
+  const lowStock=useMemo(()=>data.inventory.filter(item=>Number(item.quantity)<=Number(item.minimumStock)),[data.inventory]); const activeOrders=data.orders.filter(order=>!["completed","cancelled"].includes(String(order.status).toLowerCase()));
+  const weeklyOrders=useMemo(()=>{const days=Array.from({length:7},(_,index)=>{const date=new Date();date.setHours(0,0,0,0);date.setDate(date.getDate()-(6-index));return{id:localDateKey(date),label:date.toLocaleDateString("en-PH",{weekday:"short"}),value:0};});const byDate=new Map(days.map(day=>[day.id,day]));data.orders.forEach(order=>{const key=localDateKey(order.created_at);const day=byDate.get(key);if(day)day.value+=1;});return days;},[data.orders]);
+  return <main className="dashboard-page"><div className="dashboard-shell"><header className="dashboard-header"><div><span className="dashboard-eyebrow"><BarChart3 size={15}/> Live operations</span><h1>Business Dashboard</h1><p>Real-time operational data from orders, customers, staff, inventory, and payments.</p></div><button className="btn btn-secondary" onClick={refresh} disabled={loading}><RefreshCw size={17}/> Refresh</button></header>
+    {error&&<div role="alert" className="dashboard-error">{error}<button onClick={refresh}>Try again</button></div>}
+    <section className="dashboard-kpis" aria-label="Dashboard summary"><article><span className="blue"><ShoppingBag/></span><div><small>Active Orders</small><strong>{activeOrders.length}</strong></div></article><article><span className="green"><PhilippinePeso/></span><div><small>Total Revenue</small><strong>{money(data.analytics.totalRevenue)}</strong></div></article><article><span className="purple"><UserRound/></span><div><small>Customers</small><strong>{data.customers.length}</strong></div></article><article><span className="orange"><AlertTriangle/></span><div><small>Low Stock</small><strong>{lowStock.length}</strong></div></article></section>
+    <section className="dashboard-charts" aria-label="Dashboard charts"><WeeklyOrdersChart data={weeklyOrders}/><RevenueTrendChart data={(data.analytics.revenueDataset||[]).slice(-7)}/></section>
+    <div className="dashboard-grid"><section className="dashboard-panel"><header><div><h2>Recent Orders</h2><p>Latest transaction records and current status</p></div><Link to="/orders">View all</Link></header><div className="dashboard-table-wrap"><table><thead><tr><th>Order</th><th>Customer</th><th>Amount</th><th>Status</th></tr></thead><tbody>{data.orders.slice(0,6).map(order=><tr key={order.id}><td>{order.order_number||String(order.id).slice(0,8)}</td><td>{order.customers?.name||"Walk-in"}</td><td>{money(order.total_price ?? order.total_amount)}</td><td><span className={`dashboard-status ${String(order.status).toLowerCase()}`}>{order.status||"Pending"}</span></td></tr>)}{!data.orders.length&&<tr><td colSpan="4" className="dashboard-empty">No order records available.</td></tr>}</tbody></table></div></section>
+      <section className="dashboard-panel alerts"><header><div><h2>Inventory Alerts</h2><p>Items at or below minimum stock</p></div><Link to="/inventory">Manage</Link></header><div className="dashboard-alert-list">{lowStock.slice(0,6).map(item=><article key={item.id}><span><AlertTriangle size={17}/></span><div><strong>{item.itemName}</strong><p>{item.quantity} {item.unit} remaining · minimum {item.minimumStock}</p></div><em>Low</em></article>)}{!lowStock.length&&<div className="dashboard-empty"><Boxes size={24}/><p>All inventory levels are healthy.</p></div>}</div></section></div>
+    <footer className="dashboard-live"><Clock3 size={14}/>{loading?"Refreshing live data...":`Automatically refreshes every 15 seconds${updatedAt?` · Updated ${updatedAt.toLocaleTimeString("en-PH")}`:""}`}</footer>
+  </div></main>;
+}

@@ -1,272 +1,232 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
+
 import OrdersTable from "../components/OrdersTable.jsx";
 
 describe("OrdersTable", () => {
   const mockOrders = [
     {
-      id: 1,
-      orderNumber: "ORD001",
-      customer: "Juan Dela Cruz",
-      weight: "5kg",
-      status: "Pending",
-      payment: "Paid",
-      amount: "250",
-      date: "2025-06-23",
+      id: "1",
+      order_number: "ORD001",
+      customers: {
+        name: "Juan Dela Cruz",
+        phone: "09171234567",
+      },
+      weight_kg: 5,
+      total_price: 200,
+      amount_paid: 100,
+      payment_status: "partial",
+      payment_method: "cash",
+      status: "pending",
+      estimated_completion: null,
     },
     {
-      id: 2,
-      orderNumber: "ORD002",
-      customer: "Maria Santos",
-      weight: "3kg",
-      status: "Washing",
-      payment: "Unpaid",
-      amount: "150",
-      date: "2025-06-24",
+      id: "2",
+      order_number: "ORD002",
+      customers: {
+        name: "Maria Santos",
+        phone: "09999999999",
+      },
+      weight_kg: 8,
+      total_price: 350,
+      amount_paid: 350,
+      payment_status: "paid",
+      payment_method: "gcash",
+      status: "ready",
+      estimated_completion: null,
     },
   ];
 
-  it("should render all table headers", () => {
-    // Arrange
+  const renderTable = (orders = mockOrders) =>
     render(
       <OrdersTable
-        orders={mockOrders}
+        orders={orders}
+        onView={vi.fn()}
         onEdit={vi.fn()}
         onDelete={vi.fn()}
-      />
+        onStatusChange={vi.fn()}
+      />,
     );
 
-    // Act
-    const orderNumberHeader =
-      screen.getByText("Order Number");
+  it("should render all table headers", () => {
+    renderTable();
 
-    const customerHeader =
-      screen.getByText("Customer");
+    expect(
+      screen.getByRole("columnheader", {
+        name: /order #/i,
+      }),
+    ).toBeInTheDocument();
 
-    const weightHeader =
-      screen.getByText("Weight");
+    expect(
+      screen.getByRole("columnheader", {
+        name: /customer/i,
+      }),
+    ).toBeInTheDocument();
 
-    const statusHeader =
-      screen.getByText("Status");
+    expect(
+      screen.getByRole("columnheader", {
+        name: /weight/i,
+      }),
+    ).toBeInTheDocument();
 
-    const paymentHeader =
-      screen.getByText("Payment");
+    expect(
+      screen.getByRole("columnheader", {
+        name: /status/i,
+      }),
+    ).toBeInTheDocument();
 
-    const amountHeader =
-      screen.getByText("Amount");
+    expect(
+      screen.getByRole("columnheader", {
+        name: /payment/i,
+      }),
+    ).toBeInTheDocument();
 
-    const dateHeader =
-      screen.getByText("Date");
+    expect(
+      screen.getByRole("columnheader", {
+        name: /amount/i,
+      }),
+    ).toBeInTheDocument();
 
-    const actionsHeader =
-      screen.getByText("Actions");
+    expect(
+      screen.getByRole("columnheader", {
+        name: /completion/i,
+      }),
+    ).toBeInTheDocument();
 
-    // Assert
-    expect(orderNumberHeader)
-      .toBeInTheDocument();
-
-    expect(customerHeader)
-      .toBeInTheDocument();
-
-    expect(weightHeader)
-      .toBeInTheDocument();
-
-    expect(statusHeader)
-      .toBeInTheDocument();
-
-    expect(paymentHeader)
-      .toBeInTheDocument();
-
-    expect(amountHeader)
-      .toBeInTheDocument();
-
-    expect(dateHeader)
-      .toBeInTheDocument();
-
-    expect(actionsHeader)
-      .toBeInTheDocument();
+    expect(
+      screen.getByRole("columnheader", {
+        name: /actions/i,
+      }),
+    ).toBeInTheDocument();
   });
 
   it("should render all orders", () => {
-    // Arrange
-    render(
-      <OrdersTable
-        orders={mockOrders}
-        onEdit={vi.fn()}
-        onDelete={vi.fn()}
-      />
-    );
+    renderTable();
 
-    // Act
-    const rows =
-      screen.getAllByRole("row");
-
-    // Assert
-    expect(rows).toHaveLength(3);
+    // 1 header row + 2 order rows
+    expect(screen.getAllByRole("row")).toHaveLength(3);
   });
 
   it("should render order information correctly", () => {
-    // Arrange
+    renderTable();
+
+    expect(screen.getByText("ORD001")).toBeInTheDocument();
+
+    expect(screen.getByText("Juan Dela Cruz")).toBeInTheDocument();
+
+    expect(screen.getByText("5kg")).toBeInTheDocument();
+
+    expect(screen.getByText(/partial/i)).toBeInTheDocument();
+
+    expect(screen.getByText("₱200.00")).toBeInTheDocument();
+  });
+
+  it("should display 'No orders found' when empty", () => {
+    renderTable([]);
+
+    expect(screen.getByText(/no orders found/i)).toBeInTheDocument();
+  });
+
+  it("should call onView when View button is clicked", async () => {
+    const user = userEvent.setup();
+
+    const handleView = vi.fn();
+
     render(
       <OrdersTable
         orders={mockOrders}
+        onView={handleView}
         onEdit={vi.fn()}
         onDelete={vi.fn()}
-      />
+        onStatusChange={vi.fn()}
+      />,
     );
 
-    // Act
-    const orderNumber =
-      screen.getByText("ORD001");
-
-    const customer =
-      screen.getByText("Juan Dela Cruz");
-
-    const weight =
-      screen.getByText("5kg");
-
-    // Assert
-    expect(orderNumber)
-      .toBeInTheDocument();
-
-    expect(customer)
-      .toBeInTheDocument();
-
-    expect(weight)
-      .toBeInTheDocument();
-  });
-
-  it("should display No orders found when orders array is empty", () => {
-    // Arrange
-    render(
-      <OrdersTable
-        orders={[]}
-        onEdit={vi.fn()}
-        onDelete={vi.fn()}
-      />
+    await user.click(
+      screen.getAllByRole("button", {
+        name: /view/i,
+      })[0],
     );
 
-    // Act
-    const message =
-      screen.getByText(
-        "No orders found"
-      );
-
-    // Assert
-    expect(message)
-      .toBeInTheDocument();
+    expect(handleView).toHaveBeenCalledWith(mockOrders[0]);
   });
 
   it("should call onEdit when Edit button is clicked", async () => {
-    // Arrange
-    const user =
-      userEvent.setup();
+    const user = userEvent.setup();
 
-    const handleEdit =
-      vi.fn();
+    const handleEdit = vi.fn();
 
     render(
       <OrdersTable
         orders={mockOrders}
+        onView={vi.fn()}
         onEdit={handleEdit}
         onDelete={vi.fn()}
-      />
+        onStatusChange={vi.fn()}
+      />,
     );
 
-    const editButtons =
-      screen.getAllByRole(
-        "button",
-        { name: /edit/i }
-      );
-
-    // Act
     await user.click(
-      editButtons[0]
+      screen.getAllByRole("button", {
+        name: /edit/i,
+      })[0],
     );
 
-    // Assert
-    expect(handleEdit)
-      .toHaveBeenCalledWith(
-        mockOrders[0]
-      );
+    expect(handleEdit).toHaveBeenCalledWith(mockOrders[0]);
   });
 
   it("should call onDelete when Delete button is clicked", async () => {
-    // Arrange
-    const user =
-      userEvent.setup();
+    const user = userEvent.setup();
 
-    const handleDelete =
-      vi.fn();
+    const handleDelete = vi.fn();
 
     render(
       <OrdersTable
         orders={mockOrders}
+        onView={vi.fn()}
         onEdit={vi.fn()}
         onDelete={handleDelete}
-      />
+        onStatusChange={vi.fn()}
+      />,
     );
 
-    const deleteButtons =
-      screen.getAllByRole(
-        "button",
-        { name: /delete/i }
-      );
-
-    // Act
     await user.click(
-      deleteButtons[0]
+      screen.getAllByRole("button", {
+        name: /delete/i,
+      })[0],
     );
 
-    // Assert
-    expect(handleDelete)
-      .toHaveBeenCalledWith(
-        mockOrders[0]
-      );
+    expect(handleDelete).toHaveBeenCalledWith(mockOrders[0]);
+  });
+
+  it("should render one View button per order", () => {
+    renderTable();
+
+    expect(
+      screen.getAllByRole("button", {
+        name: /view/i,
+      }),
+    ).toHaveLength(2);
   });
 
   it("should render one Edit button per order", () => {
-    // Arrange
-    render(
-      <OrdersTable
-        orders={mockOrders}
-        onEdit={vi.fn()}
-        onDelete={vi.fn()}
-      />
-    );
+    renderTable();
 
-    // Act
-    const editButtons =
-      screen.getAllByRole(
-        "button",
-        { name: /edit/i }
-      );
-
-    // Assert
-    expect(editButtons)
-      .toHaveLength(2);
+    expect(
+      screen.getAllByRole("button", {
+        name: /edit/i,
+      }),
+    ).toHaveLength(2);
   });
 
   it("should render one Delete button per order", () => {
-    // Arrange
-    render(
-      <OrdersTable
-        orders={mockOrders}
-        onEdit={vi.fn()}
-        onDelete={vi.fn()}
-      />
-    );
+    renderTable();
 
-    // Act
-    const deleteButtons =
-      screen.getAllByRole(
-        "button",
-        { name: /delete/i }
-      );
-
-    // Assert
-    expect(deleteButtons)
-      .toHaveLength(2);
+    expect(
+      screen.getAllByRole("button", {
+        name: /delete/i,
+      }),
+    ).toHaveLength(2);
   });
 });

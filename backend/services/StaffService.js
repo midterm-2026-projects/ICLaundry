@@ -54,13 +54,14 @@ export const readStaffById = async (id) => {
  * ==============================================
  */
 export const addStaff = async (data) => {
-  const { full_name, email, phone, role, position, branch_id } = data;
+  const { full_name, email, phone, role, position, branch_id } = data || {};
 
   if (!full_name || full_name.trim() === "") {
     throw new Error("Full name is required");
   }
 
-  if (!email || !email.includes("@")) {
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
     throw new Error("Invalid email address");
   }
 
@@ -70,7 +71,7 @@ export const addStaff = async (data) => {
     throw new Error("Role must be one of: admin, staff");
   }
 
-  const existingStaff = await getStaffByEmail(email);
+  const existingStaff = await getStaffByEmail(normalizedEmail);
 
   if (existingStaff) {
     throw new Error("Email already exists");
@@ -85,15 +86,15 @@ export const addStaff = async (data) => {
   }
 
   return await createStaff({
-    full_name,
+    full_name: full_name.trim(),
 
-    email,
+    email: normalizedEmail,
 
-    phone,
+    phone: String(phone || "").trim() || null,
 
     role,
 
-    position,
+    position: String(position || "").trim() || null,
 
     branch_id,
   });
@@ -119,23 +120,36 @@ export const editStaff = async (id, data) => {
     throw new Error("Staff not found");
   }
 
-  if (data.email) {
-    const existing = await getStaffByEmail(data.email);
+  const updates = { ...data };
+  if (Object.hasOwn(updates, "full_name")) {
+    updates.full_name = String(updates.full_name || "").trim();
+    if (!updates.full_name) throw new Error("Full name is required");
+  }
+  if (Object.hasOwn(updates, "role") && !["admin", "staff"].includes(updates.role)) {
+    throw new Error("Role must be one of: admin, staff");
+  }
+  if (Object.hasOwn(updates, "email")) {
+    updates.email = String(updates.email || "").trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(updates.email)) throw new Error("Invalid email address");
+    const existing = await getStaffByEmail(updates.email);
 
     if (existing && existing.id !== id) {
       throw new Error("Email already exists");
     }
   }
 
-  if (data.branch_id) {
-    const branch = await getBranchById(data.branch_id);
+  if (updates.branch_id) {
+    const branch = await getBranchById(updates.branch_id);
 
     if (!branch) {
       throw new Error("Branch not found");
     }
   }
 
-  return await updateStaff(id, data);
+  if (Object.hasOwn(updates, "phone")) updates.phone = String(updates.phone || "").trim() || null;
+  if (Object.hasOwn(updates, "position")) updates.position = String(updates.position || "").trim() || null;
+  if (updates.branch_id === "") updates.branch_id = null;
+  return await updateStaff(id, updates);
 };
 
 /**

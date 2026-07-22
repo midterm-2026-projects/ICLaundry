@@ -1,143 +1,149 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi } from "vitest";
+
 import PaymentSection from "../components/PaymentSection";
 
 describe("PaymentSection", () => {
-  it("should render amount paid input", () => {
-    // Arrange
-    render(
-      <PaymentSection
-        paymentStatus="Unpaid"
-        onAmountChange={vi.fn()}
-        onMethodChange={vi.fn()}
-      />
-    );
+  const defaultProps = {
+    orderId: "1",
+    paymentStatus: "partial",
+    amountPaid: 100,
+    remainingBalance: 100,
+    onSubmitPayment: vi.fn(),
+  };
 
-    // Act
-    const input = screen.getByRole("spinbutton");
+  it("should render payment information", () => {
+    render(<PaymentSection {...defaultProps} />);
 
-    // Assert
-    expect(input).toBeInTheDocument();
+    expect(screen.getByText(/payment status/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/amount paid/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/remaining balance/i)).toBeInTheDocument();
+  });
+
+  it("should render payment amount input", () => {
+    render(<PaymentSection {...defaultProps} />);
+
+    expect(screen.getByPlaceholderText(/enter amount/i)).toBeInTheDocument();
   });
 
   it("should render payment method dropdown", () => {
-    // Arrange
-    render(
-      <PaymentSection
-        paymentStatus="Unpaid"
-        onAmountChange={vi.fn()}
-        onMethodChange={vi.fn()}
-      />
-    );
+    render(<PaymentSection {...defaultProps} />);
 
-    // Act
-    const dropdown = screen.getByRole("combobox");
-
-    // Assert
-    expect(dropdown).toBeInTheDocument();
+    expect(screen.getByRole("combobox")).toBeInTheDocument();
   });
 
-  it("should display payment status", () => {
-    // Arrange
-    render(
-      <PaymentSection
-        paymentStatus="Paid"
-        onAmountChange={vi.fn()}
-        onMethodChange={vi.fn()}
-      />
-    );
-
-    // Act
-    const status = screen.getByText("Paid");
-
-    // Assert
-    expect(status).toBeInTheDocument();
-  });
-
-  it("should allow typing amount", async () => {
-    // Arrange
+  it("should allow entering payment amount", async () => {
     const user = userEvent.setup();
 
-    render(
-      <PaymentSection
-        paymentStatus="Unpaid"
-        onAmountChange={vi.fn()}
-        onMethodChange={vi.fn()}
-      />
-    );
+    render(<PaymentSection {...defaultProps} />);
 
-    const input = screen.getByRole("spinbutton");
+    const input = screen.getByPlaceholderText(/enter amount/i);
 
-    // Act
-    await user.type(input, "500");
+    await user.type(input, "100");
 
-    // Assert
-    expect(input).toHaveValue(500);
+    expect(input).toHaveValue(100);
   });
 
-  it("should call onAmountChange", async () => {
-    // Arrange
+  it("should allow selecting payment method", async () => {
     const user = userEvent.setup();
-    const handleAmount = vi.fn();
 
-    render(
-      <PaymentSection
-        paymentStatus="Unpaid"
-        onAmountChange={handleAmount}
-        onMethodChange={vi.fn()}
-      />
-    );
+    render(<PaymentSection {...defaultProps} />);
 
-    const input = screen.getByRole("spinbutton");
+    const select = screen.getByRole("combobox");
 
-    // Act
-    await user.type(input, "500");
+    await user.selectOptions(select, "gcash");
 
-    // Assert
-    expect(handleAmount).toHaveBeenLastCalledWith("500");
+    expect(select).toHaveValue("gcash");
   });
 
-  it("should call onMethodChange", async () => {
-    // Arrange
+  it("should submit payment", async () => {
     const user = userEvent.setup();
-    const handleMethod = vi.fn();
 
-    render(
-      <PaymentSection
-        paymentStatus="Unpaid"
-        onAmountChange={vi.fn()}
-        onMethodChange={handleMethod}
-      />
+    const handleSubmit = vi.fn();
+
+    render(<PaymentSection {...defaultProps} onSubmitPayment={handleSubmit} />);
+
+    await user.type(screen.getByPlaceholderText(/enter amount/i), "100");
+
+    await user.selectOptions(screen.getByRole("combobox"), "cash");
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /submit payment/i,
+      }),
     );
 
-    const dropdown = screen.getByRole("combobox");
+    expect(handleSubmit).toHaveBeenCalledWith({
+      order_id: "1",
+      amount: 100,
+      payment_method: "cash",
+    });
+  });
 
-    // Act
-    await user.selectOptions(dropdown, "GCash");
+  it("should prevent payment greater than remaining balance", async () => {
+    const user = userEvent.setup();
 
-    // Assert
-    expect(handleMethod).toHaveBeenCalledWith("GCash");
+    render(<PaymentSection {...defaultProps} />);
+
+    await user.type(screen.getByPlaceholderText(/enter amount/i), "300");
+
+    await user.selectOptions(screen.getByRole("combobox"), "cash");
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /submit payment/i,
+      }),
+    );
+
+    expect(
+      screen.getByText(/cannot exceed remaining balance/i),
+    ).toBeInTheDocument();
+  });
+
+  it("should require payment method", async () => {
+    const user = userEvent.setup();
+
+    render(<PaymentSection {...defaultProps} />);
+
+    await user.type(screen.getByPlaceholderText(/enter amount/i), "100");
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /submit payment/i,
+      }),
+    );
+
+    expect(screen.getByText(/select payment method/i)).toBeInTheDocument();
   });
 
   it("should display all payment methods", () => {
-    // Arrange
-    render(
-      <PaymentSection
-        paymentStatus="Paid"
-        onAmountChange={vi.fn()}
-        onMethodChange={vi.fn()}
-      />
-    );
+    render(<PaymentSection {...defaultProps} />);
 
-    // Act
-    const cash = screen.getByRole("option", { name: "Cash" });
-    const gcash = screen.getByRole("option", { name: "GCash" });
-    const maya = screen.getByRole("option", { name: "Maya" });
+    expect(
+      screen.getByRole("option", {
+        name: "Cash",
+      }),
+    ).toBeInTheDocument();
 
-    // Assert
-    expect(cash).toBeInTheDocument();
-    expect(gcash).toBeInTheDocument();
-    expect(maya).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", {
+        name: "GCash",
+      }),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole("option", {
+        name: "Bank Transfer",
+      }),
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByRole("option", {
+        name: "Card",
+      }),
+    ).toBeInTheDocument();
   });
 });

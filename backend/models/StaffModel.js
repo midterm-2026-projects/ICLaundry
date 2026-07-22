@@ -15,7 +15,7 @@ import { supabase } from "../config/db.js";
 export const getStaff = async () => {
   const { data, error } = await supabase
     .from("staff")
-    .select("*")
+    .select("*, branch:branches(id, branch_name)")
     .order("created_at", {
       ascending: false,
     });
@@ -33,7 +33,7 @@ export const getStaff = async () => {
 export const getStaffById = async (id) => {
   const { data, error } = await supabase
     .from("staff")
-    .select("*")
+    .select("*, branch:branches(id, branch_name)")
     .eq("id", id)
     .maybeSingle();
 
@@ -50,7 +50,7 @@ export const getStaffById = async (id) => {
 export const getStaffByEmail = async (email) => {
   const { data, error } = await supabase
     .from("staff")
-    .select("*")
+    .select("*, branch:branches(id, branch_name)")
     .eq("email", email)
     .maybeSingle();
 
@@ -68,7 +68,7 @@ export const createStaff = async (staffData) => {
   const { data, error } = await supabase
     .from("staff")
     .insert(staffData)
-    .select("*")
+    .select("*, branch:branches(id, branch_name)")
     .single();
 
   if (error) {
@@ -86,7 +86,7 @@ export const updateStaff = async (id, updates) => {
     .from("staff")
     .update(updates)
     .eq("id", id)
-    .select("*")
+    .select("*, branch:branches(id, branch_name)")
     .single();
 
   if (error) {
@@ -115,7 +115,7 @@ export const deleteStaff = async (id) => {
 export const getStaffByBranch = async (branchId) => {
   const { data, error } = await supabase
     .from("staff")
-    .select("*")
+    .select("*, branch:branches(id, branch_name)")
     .eq("branch_id", branchId)
     .order("full_name", {
       ascending: true,
@@ -134,7 +134,7 @@ export const getStaffByBranch = async (branchId) => {
 export const getStaffByRole = async (role) => {
   const { data, error } = await supabase
     .from("staff")
-    .select("*")
+    .select("*, branch:branches(id, branch_name)")
     .eq("role", role)
     .order("full_name", {
       ascending: true,

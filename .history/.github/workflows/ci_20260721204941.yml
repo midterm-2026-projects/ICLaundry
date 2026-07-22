@@ -1,0 +1,219 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - "**"
+
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ─────────────────────────────────────────────
+  # 1. BACKEND TESTS
+  # ─────────────────────────────────────────────
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci
+
+      - name: Run backend tests
+        run: npm test
+        env:
+          CI: true
+          NODE_ENV: test
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+      - name: Upload backend coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # ─────────────────────────────────────────────
+  # 2. FRONTEND TESTS
+  # ─────────────────────────────────────────────
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Run frontend unit tests
+        run: npm run test:unit -- --run
+        env:
+          CI: true
+
+      - name: Build frontend
+        run: npm run build
+
+  # ─────────────────────────────────────────────
+  # 3. PLAYWRIGHT E2E TESTS
+  # ─────────────────────────────────────────────
+  playwright-e2e:
+    name: Playwright E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    env:
+      CI: true
+      NODE_ENV: test
+      WATERWISE_E2E: true
+
+      # Update this if your backend uses another port.
+      BACKEND_PORT: 5000
+
+      # Update this variable name if your Vite application uses a different one.
+      VITE_API_URL: http://127.0.0.1:5000/api
+
+      PLAYWRIGHT_BASE_URL: http://127.0.0.1:5173
+
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+      # Add database variables here when required.
+      # DB_HOST: 127.0.0.1
+      # DB_PORT: 3306
+      # DB_USER: root
+      # DB_PASSWORD: password
+      # DB_NAME: waterwise_test
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            backend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Install Chromium and system dependencies
+        run: npx playwright install --with-deps chromium
+
+      # Change "npm start" if your backend uses a different script,
+      # such as npm run dev, npm run start:test, or node server.js.
+      - name: Start backend server
+        working-directory: backend
+        run: |
+          npm start > backend.log 2>&1 &
+          echo $! > backend.pid
+
+      - name: Wait for backend server
+        run: |
+          npx wait-on \
+            http://127.0.0.1:5000/api/health \
+            --timeout 120000
+
+      - name: Run Playwright E2E tests
+        run: npm run test:e2e
+
+      - name: Display backend logs after failure
+        if: failure()
+        working-directory: backend
+        run: |
+          echo "======================================"
+          echo "BACKEND LOGS"
+          echo "======================================"
+          cat backend.log || true
+
+      - name: Upload Playwright HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload Playwright test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: frontend/test-results
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload backend logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-backend-logs
+          path: backend/backend.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # ─────────────────────────────────────────────
+  # 4. FINAL CI STATUS
+  # ─────────────────────────────────────────────
+  ci-success:
+    name: CI Passed
+    runs-on: ubuntu-latest
+    needs:
+      - backend-tests
+      - frontend-tests
+      - playwright-e2e
+
+    steps:
+      - name: Confirm all tests passed
+        run: echo "Backend, frontend, and Playwright tests passed."

@@ -9,6 +9,9 @@ import staffRoutes from "./routes/StaffRoutes.js";
 import branchRoutes from "./routes/BranchRoutes.js";
 import analyticsRoutes from "./routes/AnalyticsRoutes.js";
 import decisionSupportRoutes from "./routes/DecisionSupportRoutes.js";
+import customerRoutes from "./routes/CustomerRoutes.js";
+import inventoryRoutes from "./routes/InventoryRoutes.js";
+import settingsRoutes from "./routes/SettingsRoutes.js";
 
 const app = express();
 
@@ -40,17 +43,10 @@ app.use("/api/analytics", analyticsRoutes);
 
 app.use("/api/decision-support", decisionSupportRoutes);
 
-/**
- * ==============================================
- * NOT FOUND HANDLER
- * ==============================================
- */
+app.use("/api/customers", customerRoutes);
 
-app.use((req, res) => {
-  return res.status(404).json({
-    success: false,
-    message: "Endpoint not found",
-  });
-});
+app.use("/api/inventory", inventoryRoutes);
+
+app.use("/api/settings", settingsRoutes);
 
 export default app;

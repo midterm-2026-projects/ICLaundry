@@ -1,3 +1,5 @@
+// backend/services/CustomerService.js
+
 import {
   insertCustomer,
   getCustomers,
@@ -5,8 +7,13 @@ import {
   deleteCustomer,
 } from "../models/CustomerModel.js";
 
-const validateCustomer = (customer) => {
+/**
+ * ==============================================
+ * VALIDATION
+ * ==============================================
+ */
 
+const validateCustomer = (customer) => {
   if (!customer.name || customer.name.trim() === "") {
     throw new Error("Customer name is required");
   }
@@ -18,63 +25,70 @@ const validateCustomer = (customer) => {
   if (!customer.email || customer.email.trim() === "") {
     throw new Error("Email is required");
   }
-
 };
 
 const validateCustomerId = (id) => {
-
-  if (!id) {
+  if (
+    id === undefined ||
+    id === null ||
+    (typeof id === "string" && id.trim() === "")
+  ) {
     throw new Error("Customer ID is required");
   }
-
 };
 
-// Create Customer
-export const createCustomer = (customer) => {
-
+/**
+ * ==============================================
+ * CREATE CUSTOMER
+ * ==============================================
+ */
+export const createCustomer = async (customer) => {
   validateCustomer(customer);
 
-  insertCustomer(customer);
-
-  return "Customer created successfully";
-
+  return await insertCustomer(customer);
 };
 
-// Read Customers
-export const readCustomers = () => {
-
-  return getCustomers();
-
+/**
+ * ==============================================
+ * READ CUSTOMERS
+ * ==============================================
+ */
+export const readCustomers = async () => {
+  return await getCustomers();
 };
 
-// Update Customer
-export const editCustomer = (id, customer) => {
-
+/**
+ * ==============================================
+ * UPDATE CUSTOMER
+ * ==============================================
+ */
+export const editCustomer = async (id, customer) => {
   validateCustomerId(id);
 
   validateCustomer(customer);
 
-  const updatedCustomer = updateCustomer(id, customer);
+  const updatedCustomer = await updateCustomer(id, customer);
 
   if (!updatedCustomer) {
     throw new Error("Customer not found");
   }
 
-  return "Customer updated successfully";
-
+  return updatedCustomer;
 };
 
-// Delete Customer
-export const removeCustomer = (id) => {
-
+/**
+ * ==============================================
+ * DELETE CUSTOMER
+ * ==============================================
+ */
+export const removeCustomer = async (id) => {
   validateCustomerId(id);
 
-  const deletedCustomer = deleteCustomer(id);
+  const deleted = await deleteCustomer(id);
 
-  if (!deletedCustomer) {
+  if (!deleted) {
     throw new Error("Customer not found");
   }
 
   return "Customer deleted successfully";
-
 };

@@ -1,23 +1,53 @@
+// frontend/src/API/paymentAPI.js
+
 import axios from "axios";
 
 const API_URL = "http://localhost:3000/api";
 
-export const getOrderById = async (orderId) => {
-  const response = await axios.get(`${API_URL}/orders/${orderId}`);
-  return response.data.data;
+const handleError = (error) => {
+  if (error.response && error.response.data) {
+    throw new Error(error.response.data.message || "Payment request failed.");
+  }
+
+  throw new Error(error.message || "Something went wrong.");
 };
+
+/**
+ * ==============================================
+ * CREATE INITIAL PAYMENT
+ * ==============================================
+ */
 
 export const createInitialPayment = async (paymentData) => {
-  const response = await axios.post(`${API_URL}/payments/initial`, paymentData);
+  try {
+    const response = await axios.post(
+      `${API_URL}/payments/initial`,
 
-  return response.data.data;
+      paymentData,
+    );
+
+    return response.data.data;
+  } catch (error) {
+    handleError(error);
+  }
 };
 
-export const completePayment = async (paymentData) => {
-  const response = await axios.post(
-    `${API_URL}/payments/complete`,
-    paymentData,
-  );
+/**
+ * ==============================================
+ * COMPLETE PAYMENT
+ * ==============================================
+ */
 
-  return response.data.data;
+export const completePayment = async (paymentData) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/payments/complete`,
+
+      paymentData,
+    );
+
+    return response.data.data;
+  } catch (error) {
+    handleError(error);
+  }
 };

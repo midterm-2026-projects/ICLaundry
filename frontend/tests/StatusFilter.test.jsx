@@ -1,95 +1,131 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
-import StatusFilter from "../components/StatusFilter.jsx";
+import { describe, it, expect, vi } from "vitest";
+
+import StatusFilter from "../components/StatusFilter";
 
 describe("StatusFilter", () => {
-  it("should render all status tabs", () => {
-    // Arrange
-    const handleStatusChange = vi.fn();
+  it("should render all status buttons", () => {
+    render(<StatusFilter selectedStatus="all" onStatusChange={vi.fn()} />);
 
-    render(
-      <StatusFilter selectedStatus="All" onStatusChange={handleStatusChange} />,
-    );
+    expect(
+      screen.getByRole("button", {
+        name: /all/i,
+      }),
+    ).toBeInTheDocument();
 
-    // Act
-    const allButton = screen.getByRole("button", {
-      name: /all/i,
-    });
+    expect(
+      screen.getByRole("button", {
+        name: /pending/i,
+      }),
+    ).toBeInTheDocument();
 
-    const pendingButton = screen.getByRole("button", {
-      name: /pending/i,
-    });
+    expect(
+      screen.getByRole("button", {
+        name: /washing/i,
+      }),
+    ).toBeInTheDocument();
 
-    const washingButton = screen.getByRole("button", {
-      name: /washing/i,
-    });
+    expect(
+      screen.getByRole("button", {
+        name: /drying/i,
+      }),
+    ).toBeInTheDocument();
 
-    const dryingButton = screen.getByRole("button", {
-      name: /drying/i,
-    });
+    expect(
+      screen.getByRole("button", {
+        name: /folding/i,
+      }),
+    ).toBeInTheDocument();
 
-    const foldingButton = screen.getByRole("button", {
-      name: /folding/i,
-    });
+    expect(
+      screen.getByRole("button", {
+        name: /ready for pick-up/i,
+      }),
+    ).toBeInTheDocument();
 
-    const readyButton = screen.getByRole("button", {
-      name: /ready for pick-up/i,
-    });
+    expect(
+      screen.getByRole("button", {
+        name: /released/i,
+      }),
+    ).toBeInTheDocument();
 
-    const releasedButton = screen.getByRole("button", {
-      name: /released/i,
-    });
-
-    // Assert
-    expect(allButton).toBeInTheDocument();
-    expect(pendingButton).toBeInTheDocument();
-    expect(washingButton).toBeInTheDocument();
-    expect(dryingButton).toBeInTheDocument();
-    expect(foldingButton).toBeInTheDocument();
-    expect(readyButton).toBeInTheDocument();
-    expect(releasedButton).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: /cancelled/i,
+      }),
+    ).toBeInTheDocument();
   });
 
   it("should call onStatusChange when Pending is clicked", async () => {
-    // Arrange
     const user = userEvent.setup();
 
     const handleStatusChange = vi.fn();
 
     render(
-      <StatusFilter selectedStatus="All" onStatusChange={handleStatusChange} />,
+      <StatusFilter selectedStatus="all" onStatusChange={handleStatusChange} />,
     );
 
-    const pendingButton = screen.getByRole("button", {
-      name: /pending/i,
-    });
+    await user.click(
+      screen.getByRole("button", {
+        name: /pending/i,
+      }),
+    );
 
-    // Act
-    await user.click(pendingButton);
-
-    // Assert
-    expect(handleStatusChange).toHaveBeenCalledWith("Pending");
+    expect(handleStatusChange).toHaveBeenCalledWith("pending");
   });
 
   it("should call onStatusChange when Washing is clicked", async () => {
-    // Arrange
     const user = userEvent.setup();
 
     const handleStatusChange = vi.fn();
 
     render(
-      <StatusFilter selectedStatus="All" onStatusChange={handleStatusChange} />,
+      <StatusFilter selectedStatus="all" onStatusChange={handleStatusChange} />,
     );
 
-    const washingButton = screen.getByRole("button", {
-      name: /washing/i,
-    });
+    await user.click(
+      screen.getByRole("button", {
+        name: /washing/i,
+      }),
+    );
 
-    // Act
-    await user.click(washingButton);
+    expect(handleStatusChange).toHaveBeenCalledWith("washing");
+  });
 
-    // Assert
-    expect(handleStatusChange).toHaveBeenCalledWith("Washing");
+  it("should call onStatusChange when Ready is clicked", async () => {
+    const user = userEvent.setup();
+
+    const handleStatusChange = vi.fn();
+
+    render(
+      <StatusFilter selectedStatus="all" onStatusChange={handleStatusChange} />,
+    );
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /ready for pick-up/i,
+      }),
+    );
+
+    expect(handleStatusChange).toHaveBeenCalledWith("ready");
+  });
+
+  it("should call onStatusChange when Cancelled is clicked", async () => {
+    const user = userEvent.setup();
+
+    const handleStatusChange = vi.fn();
+
+    render(
+      <StatusFilter selectedStatus="all" onStatusChange={handleStatusChange} />,
+    );
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /cancelled/i,
+      }),
+    );
+
+    expect(handleStatusChange).toHaveBeenCalledWith("cancelled");
   });
 });

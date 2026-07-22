@@ -1,100 +1,91 @@
-import {
-  fireEvent,
-  render,
-  screen,
-} from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 
-import {
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import userEvent from "@testing-library/user-event";
 
-import CustomerActions from "../components/CustomerActions.jsx";
+import { describe, expect, it, vi } from "vitest";
+
+import CustomerActions from "../components/CustomerActions";
 
 describe("CustomerActions", () => {
-  it("Should display the Add Customer button", () => {
-    render(
-      <CustomerActions
-        setShowModal={vi.fn()}
-        setEditing={vi.fn()}
-      />
-    );
+  /**
+   * ==============================================
+   * RENDERING
+   * ==============================================
+   */
+
+  it("should display the Add Customer button", () => {
+    render(<CustomerActions onAddCustomer={vi.fn()} />);
 
     expect(
       screen.getByRole("button", {
-        name: "Add Customer",
-      })
+        name: /add customer/i,
+      }),
     ).toBeInTheDocument();
   });
 
-  it("Should open the Add Customer modal when the button is clicked", () => {
-    const setShowModal = vi.fn();
-    const setEditing = vi.fn();
+  /**
+   * ==============================================
+   * USER INTERACTION
+   * ==============================================
+   */
 
-    render(
-      <CustomerActions
-        setShowModal={setShowModal}
-        setEditing={setEditing}
-      />
-    );
+  it("should call onAddCustomer when Add Customer button is clicked", async () => {
+    // Arrange
+    const user = userEvent.setup();
 
-    fireEvent.click(
+    const onAddCustomer = vi.fn();
+
+    render(<CustomerActions onAddCustomer={onAddCustomer} />);
+
+    // Act
+    await user.click(
       screen.getByRole("button", {
-        name: "Add Customer",
-      })
+        name: /add customer/i,
+      }),
     );
 
-    expect(setEditing)
-      .toHaveBeenCalledWith(false);
-
-    expect(setShowModal)
-      .toHaveBeenCalledWith(true);
+    // Assert
+    expect(onAddCustomer).toHaveBeenCalledTimes(1);
   });
 
-  it("Should open the Edit Customer modal when the Edit button is clicked", () => {
-    const setShowModal = vi.fn();
-    const setEditing = vi.fn();
+  it("should not call onAddCustomer before button is clicked", () => {
+    // Arrange
+    const onAddCustomer = vi.fn();
 
-    render(
-      <CustomerActions
-        setShowModal={setShowModal}
-        setEditing={setEditing}
-      />
-    );
+    render(<CustomerActions onAddCustomer={onAddCustomer} />);
 
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: "Edit Customer",
-      })
-    );
-
-    expect(setEditing)
-      .toHaveBeenCalledWith(true);
-
-    expect(setShowModal)
-      .toHaveBeenCalledWith(true);
+    // Assert
+    expect(onAddCustomer).not.toHaveBeenCalled();
   });
 
-  it("Should trigger Delete action when Delete button is clicked", () => {
-    const onDelete = vi.fn();
+  it("should allow multiple button clicks", async () => {
+    // Arrange
+    const user = userEvent.setup();
 
-    render(
-      <CustomerActions
-        setShowModal={vi.fn()}
-        setEditing={vi.fn()}
-        onDelete={onDelete}
-      />
-    );
+    const onAddCustomer = vi.fn();
 
-    fireEvent.click(
+    render(<CustomerActions onAddCustomer={onAddCustomer} />);
+
+    // Act
+    await user.click(
       screen.getByRole("button", {
-        name: "Delete",
-      })
+        name: /add customer/i,
+      }),
     );
 
-    expect(onDelete)
-      .toHaveBeenCalledTimes(1);
+    await user.click(
+      screen.getByRole("button", {
+        name: /add customer/i,
+      }),
+    );
+
+    await user.click(
+      screen.getByRole("button", {
+        name: /add customer/i,
+      }),
+    );
+
+    // Assert
+    expect(onAddCustomer).toHaveBeenCalledTimes(3);
   });
 });

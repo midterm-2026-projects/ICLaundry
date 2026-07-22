@@ -1,135 +1,139 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { UserRound, X } from "lucide-react";
 
-export default function CustomerModal({
-  editing,
-  onAddCustomer,
-  onUpdate,
-}) {
-  const [fullName, setFullName] =
-    useState("");
+const emptyCustomer = {
+  name: "",
+  phone: "",
+  email: "",
+  address: "",
+  notes: "",
+};
 
-  const [phone, setPhone] =
-    useState("");
+const CustomerModal = ({
+  customer = null,
+  isEditing = false,
+  onSubmit,
+  onClose,
+}) => {
+  const [formData, setFormData] = useState(emptyCustomer);
 
-  const [email, setEmail] =
-    useState("");
+  useEffect(() => {
+    setFormData(
+      customer
+        ? {
+            name: customer.name || "",
+            phone: customer.phone || "",
+            email: customer.email || "",
+            address: customer.address || "",
+            notes: customer.notes || "",
+          }
+        : emptyCustomer,
+    );
+  }, [customer]);
 
-  const [notes, setNotes] =
-    useState("");
-
-  const [error, setError] =
-    useState("");
-
-  const customerData = {
-    fullName,
-    phone,
-    email,
-    notes,
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((previous) => ({ ...previous, [name]: value }));
   };
 
-  const validateFields = () => {
-    if (
-      !fullName.trim() ||
-      !phone.trim() ||
-      !email.trim()
-    ) {
-      setError(
-        "Full Name, Phone Number, and Email are required."
-      );
+  const handleSubmit = (event) => {
+    event.preventDefault();
 
-      return false;
-    }
-
-    setError("");
-
-    return true;
-  };
-
-  const handleAddCustomer = () => {
-    if (!validateFields()) {
+    if (!formData.name.trim()) {
+      alert("Customer name is required.");
       return;
     }
 
-    onAddCustomer?.(customerData);
-  };
-
-  const handleUpdate = () => {
-    if (!validateFields()) {
+    if (!formData.phone.trim()) {
+      alert("Phone number is required.");
       return;
     }
 
-    onUpdate?.(customerData);
+    onSubmit?.(formData);
   };
 
   return (
-    <div>
-      <h2>
-        {editing
-          ? "Edit Customer"
-          : "Add Customer"}
-      </h2>
-
-      <label htmlFor="fullName">
-        Full Name
-      </label>
-
-      <input
-        id="fullName"
-        value={fullName}
-        onChange={(e) =>
-          setFullName(e.target.value)
-        }
-      />
-
-      <label htmlFor="phone">
-        Phone Number
-      </label>
-
-      <input
-        id="phone"
-        value={phone}
-        onChange={(e) =>
-          setPhone(e.target.value)
-        }
-      />
-
-      <label htmlFor="email">
-        Email
-      </label>
-
-      <input
-        id="email"
-        value={email}
-        onChange={(e) =>
-          setEmail(e.target.value)
-        }
-      />
-
-      <label htmlFor="notes">
-        Notes
-      </label>
-
-      <textarea
-        id="notes"
-        value={notes}
-        onChange={(e) =>
-          setNotes(e.target.value)
-        }
-      />
-
-      {error && <p>{error}</p>}
-
-      <button
-        onClick={
-          editing
-            ? handleUpdate
-            : handleAddCustomer
-        }
+    <div
+      className="modal-overlay customer-modal-overlay"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose?.();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="customer-modal-title"
+        className="order-modal customer-modal"
       >
-        {editing
-          ? "Update"
-          : "Add Customer"}
-      </button>
+        <header className="order-modal-header">
+          <div className="customer-modal-title">
+            <span aria-hidden="true"><UserRound size={20} /></span>
+            <div>
+              <h3 id="customer-modal-title">
+                {isEditing ? "Edit Customer" : "Add Customer"}
+              </h3>
+              <p>
+                {isEditing
+                  ? "Update the customer profile and contact details."
+                  : "Create a customer profile for faster order processing."}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="btn-icon"
+            aria-label="Close customer modal"
+            onClick={onClose}
+          >
+            <X size={18} aria-hidden="true" />
+          </button>
+        </header>
+
+        <form onSubmit={handleSubmit} className="customer-modal-form">
+          <div className="order-modal-body">
+            <section className="order-section customer-form-section">
+              <div className="order-section-title">Customer information</div>
+
+              <div className="form-group">
+                <label htmlFor="customer-name">Customer Name</label>
+                <input id="customer-name" className="form-control" type="text" name="name" value={formData.name} onChange={handleChange} autoFocus />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="customer-phone">Phone Number</label>
+                  <input id="customer-phone" className="form-control" type="text" name="phone" value={formData.phone} onChange={handleChange} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="customer-email">Email</label>
+                  <input id="customer-email" className="form-control" type="email" name="email" value={formData.email} onChange={handleChange} />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="customer-address">Address</label>
+                <textarea id="customer-address" className="form-control" name="address" rows={2} value={formData.address} onChange={handleChange} />
+              </div>
+
+              <div className="form-group customer-notes-field">
+                <label htmlFor="customer-notes">Notes</label>
+                <textarea id="customer-notes" className="form-control" name="notes" rows={3} value={formData.notes} onChange={handleChange} placeholder="Preferences or other helpful information..." />
+              </div>
+            </section>
+          </div>
+
+          <footer className="order-modal-footer">
+            <button type="button" onClick={onClose} className="btn btn-secondary">Cancel</button>
+            <button type="submit" className="btn btn-primary">
+              {isEditing ? "Update Customer" : "Create Customer"}
+            </button>
+          </footer>
+        </form>
+      </div>
     </div>
   );
-}
+};
+
+export default CustomerModal;

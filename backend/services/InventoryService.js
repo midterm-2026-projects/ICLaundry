@@ -1,11 +1,16 @@
 import {
   insertInventoryItem,
   getInventoryItems,
+  getInventoryItemById,
+  getInventoryItemsByBranch,
+  getInventoryCategoryByName,
   updateInventoryItem,
   deleteInventoryItem,
   insertInventoryRestock,
   getInventoryRestocks,
   updateInventoryStock,
+  insertInventoryUsageLog,
+  getInventoryUsageLogs,
 } from "../models/InventoryModel.js";
 
 // -------------------------------------
@@ -71,6 +76,24 @@ const validateInventoryId = (id) => {
   }
 };
 
+const toInventoryDatabasePayload = async (item) => {
+  const { category, ...payload } = item;
+
+  if (!category || String(category).trim() === "") {
+    throw new Error("Category is required");
+  }
+
+  const categoryRecord = await getInventoryCategoryByName(
+    String(category).trim(),
+  );
+
+  if (!categoryRecord) {
+    throw new Error(`Inventory category "${category}" does not exist`);
+  }
+
+  return { ...payload, category_id: categoryRecord.id };
+};
+
 // -------------------------------------
 // Restock Validation
 // -------------------------------------
@@ -93,36 +116,58 @@ const validateInventoryRestock = (inventoryRestock) => {
 // Inventory CRUD
 // -------------------------------------
 
-export const createInventoryItem = (item) => {
+export const createInventoryItem = async (item) => {
   validateInventoryItem(item);
 
-  insertInventoryItem(item);
+  const payload = await toInventoryDatabasePayload(item);
 
-  return "Inventory item created successfully";
+  return insertInventoryItem(payload);
 };
 
-export const readInventoryItems = () => {
+export const readInventoryItems = async () => {
   return getInventoryItems();
 };
 
-export const editInventoryItem = (id, item) => {
+export const readInventoryItem = async (id) => {
+  validateInventoryId(id);
+
+  const inventoryItem = await getInventoryItemById(id);
+
+  if (!inventoryItem) {
+    throw new Error("Inventory item not found");
+  }
+
+  return inventoryItem;
+};
+
+export const readInventoryItemsByBranch = async (branch) => {
+  if (!branch || String(branch).trim() === "") {
+    throw new Error("Branch is required");
+  }
+
+  return getInventoryItemsByBranch(branch);
+};
+
+export const editInventoryItem = async (id, item) => {
   validateInventoryId(id);
 
   validateInventoryItem(item);
 
-  const updatedItem = updateInventoryItem(id, item);
+  const payload = await toInventoryDatabasePayload(item);
+
+  const updatedItem = await updateInventoryItem(id, payload);
 
   if (!updatedItem) {
     throw new Error("Inventory item not found");
   }
 
-  return "Inventory item updated successfully";
+  return updatedItem;
 };
 
-export const removeInventoryItem = (id) => {
+export const removeInventoryItem = async (id) => {
   validateInventoryId(id);
 
-  const deletedItem = deleteInventoryItem(id);
+  const deletedItem = await deleteInventoryItem(id);
 
   if (!deletedItem) {
     throw new Error("Inventory item not found");
@@ -135,33 +180,55 @@ export const removeInventoryItem = (id) => {
 // Inventory Restock
 // -------------------------------------
 
-export const createInventoryRestock = (inventoryRestock) => {
+export const createInventoryRestock = async (inventoryRestock) => {
   validateInventoryRestock(inventoryRestock);
 
-  insertInventoryRestock(inventoryRestock);
+  const restock = await insertInventoryRestock(inventoryRestock);
 
-  updateInventoryStock(
+  await updateInventoryStock(
     inventoryRestock.item_id,
     inventoryRestock.quantity_added,
   );
 
-  return "Inventory restocked successfully";
+  return restock;
 };
 
-export const readInventoryRestocks = () => {
+export const readInventoryRestocks = async () => {
   return getInventoryRestocks();
+};
+
+// -------------------------------------
+// Inventory Usage
+// -------------------------------------
+
+export const createInventoryUsageLog = async (usageLog) => {
+  if (!usageLog.item_id) {
+    throw new Error("Inventory Item ID is required");
+  }
+
+  if (
+    usageLog.quantity_used === undefined ||
+    usageLog.quantity_used === null ||
+    Number(usageLog.quantity_used) <= 0
+  ) {
+    throw new Error("Usage quantity must be greater than zero");
+  }
+
+  return insertInventoryUsageLog(usageLog);
+};
+
+export const readInventoryUsageLogs = async () => {
+  return getInventoryUsageLogs();
 };
 
 // -------------------------------------
 // Stock Monitoring
 // -------------------------------------
 
-export const checkStockStatus = (itemId) => {
+export const checkStockStatus = async (itemId) => {
   validateInventoryId(itemId);
 
-  const inventoryItem = getInventoryItems().find(
-    (item) => item.id === Number(itemId),
-  );
+  const inventoryItem = await getInventoryItemById(itemId);
 
   if (!inventoryItem) {
     throw new Error("Inventory item not found");

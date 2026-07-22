@@ -1,53 +1,119 @@
+// backend/models/CustomerModel.js
 
+import { supabase } from "../config/db.js";
 
-export const insertCustomer = (customer) => {
-  const customers = getMockCustomers();
+/**
+ * ==============================================
+ * CUSTOMER MODEL
+ * Handles all database operations for customers.
+ * ==============================================
+ */
 
-  const newCustomer = {
-    id: customers.length + 1,
-    ...customer,
-  };
+/**
+ * ==============================================
+ * GET ALL CUSTOMERS
+ * ==============================================
+ */
+export const getCustomers = async () => {
+  const { data, error } = await supabase
+    .from("customers")
+    .select("*")
+    .order("created_at", {
+      ascending: false,
+    });
 
-  customers.push(newCustomer);
-
-  return newCustomer;
-};
-
-export const getCustomers = () => {
-  return getMockCustomers();
-};
-
-export const updateCustomer = (id, updatedCustomer) => {
-  const customers = getMockCustomers();
-
-  const customerIndex = customers.findIndex(
-    (customer) => customer.id === Number(id)
-  );
-
-  if (customerIndex === -1) {
-    return null;
+  if (error) {
+    throw new Error(error.message);
   }
 
-  customers[customerIndex] = {
-    ...customers[customerIndex],
-    ...updatedCustomer,
-  };
-
-  return customers[customerIndex];
+  return data || [];
 };
 
-export const deleteCustomer = (id) => {
-  const customers = getMockCustomers();
+/**
+ * ==============================================
+ * GET CUSTOMER BY PHONE
+ * ==============================================
+ */
+export const getCustomerByPhone = async (phone) => {
+  const { data, error } = await supabase
+    .from("customers")
+    .select("*")
+    .eq("phone", phone)
+    .maybeSingle();
 
-  const customerIndex = customers.findIndex(
-    (customer) => customer.id === Number(id)
-  );
-
-  if (customerIndex === -1) {
-    return false;
+  if (error) {
+    throw new Error(error.message);
   }
 
-  customers.splice(customerIndex, 1);
+  return data;
+};
 
-  return true;
+/**
+ * ==============================================
+ * CREATE CUSTOMER
+ * ==============================================
+ */
+export const insertCustomer = async (customer) => {
+  const { data, error } = await supabase
+    .from("customers")
+    .insert({
+      name: customer.name,
+      phone: customer.phone,
+      email: customer.email || null,
+      address: customer.address || null,
+      notes: customer.notes || null,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+};
+
+/**
+ * ==============================================
+ * UPDATE CUSTOMER
+ * ==============================================
+ */
+export const updateCustomer = async (id, customer) => {
+  const { data, error } = await supabase
+    .from("customers")
+    .update({
+      name: customer.name,
+      phone: customer.phone,
+      email: customer.email || null,
+      address: customer.address || null,
+      notes: customer.notes || null,
+    })
+    .eq("id", id)
+    .select()
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+};
+
+/**
+ * ==============================================
+ * DELETE CUSTOMER
+ * ==============================================
+ */
+export const deleteCustomer = async (id) => {
+  const { data, error } = await supabase
+    .from("customers")
+    .delete()
+    .eq("id", id)
+    .select();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data.length > 0;
 };

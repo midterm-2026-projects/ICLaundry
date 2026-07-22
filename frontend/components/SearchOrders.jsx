@@ -1,29 +1,40 @@
-import { useState } from "react";
+// frontend/src/components/SearchOrders.jsx
 
-const SearchOrders = ({ onSearchChange }) => {
-  const [searchValue, setSearchValue] = useState("");
+import { useEffect, useState } from "react";
+import { Search } from "lucide-react";
 
-  const handleChange = (e) => {
-    const value = e.target.value;
+const SearchOrders = ({
+  value = "",
+  onSearchChange,
+  placeholder = "Search Order Number, Customer...",
+}) => {
+  const [searchValue, setSearchValue] = useState(value);
+
+  useEffect(() => {
+    setSearchValue(value);
+  }, [value]);
+
+  const handleChange = (event) => {
+    const value = event.target.value;
 
     setSearchValue(value);
-    onSearchChange(value);
+
+    if (onSearchChange) {
+      onSearchChange(value);
+    }
   };
 
   return (
-    <>
-      <label htmlFor="searchOrders">
-        Search Orders
-      </label>
-
+    <div className="search-box">
+      <Search />
       <input
         id="searchOrders"
         type="text"
-        placeholder="Search orders..."
         value={searchValue}
         onChange={handleChange}
+        placeholder={placeholder}
       />
-    </>
+    </div>
   );
 };
 
